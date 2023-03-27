@@ -10,6 +10,9 @@ func main() {
 	item := utils.Curl(utils.CurlRequest{
 		Method: "GET",
 		Url:    "https://api.inis.cn/api/links/all",
+		Query: map[string]string{
+			"limit": "2",
+		},
 	}).Send()
 	data := cast.ToStringMap(item.Json["data"])["data"]
 	for _, val := range cast.ToSlice(data) {
