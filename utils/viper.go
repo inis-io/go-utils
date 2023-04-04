@@ -13,6 +13,8 @@ type ViperModel struct {
 	Mode string
 	// 文件名
 	Name string
+	// 文件内容
+	Content string
 }
 
 type ViperResponse struct {
@@ -66,9 +68,34 @@ func (this *ViperModel) Read() (result ViperResponse) {
 		item.SetConfigName(this.Name)
 	}
 
-	result.Viper = item
-	result.Error = item.ReadInConfig()
+	result.Viper  = item
+	result.Error  = item.ReadInConfig()
 	result.Result = cast.ToStringMap(item.AllSettings())
+
+	if result.Error != nil {
+		// 如果错误中包含文件不存在，则创建文件
+		if !os.IsNotExist(result.Error) && !IsEmpty(this.Content) {
+
+			path := this.Path + "/" + this.Name + "." + this.Mode
+
+			// 释放之前的文件
+			result.Error = item.SafeWriteConfigAs(path)
+
+			// 如果文件不存在，则创建文件
+			file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0755)
+			if err != nil {
+				result.Error = err
+			}
+
+			// 写入文件
+			_, err = file.WriteString(this.Content)
+			if err != nil {
+				result.Error = err
+			}
+
+			result.Error = file.Close()
+		}
+	}
 
 	return
 }
