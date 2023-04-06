@@ -102,21 +102,20 @@ func (this *ViperModel) Read() (result ViperResponse) {
 
 func (this *ViperResponse) Get(key string, def ...any) (result any) {
 
+	var item any
+
 	if len(def) > 0 {
-		result = def[0]
+		item = def[0]
 	}
 
-	if this.Error != nil {
-		return
+	if this.Error != nil || this.Result == nil {
+		return item
 	}
 
-	if this.Result == nil {
-		return
-	}
+	result = this.Viper.Get(key)
+	result = Ternary(!IsEmpty(result), result, item)
 
-	if this.Result[key] != nil {
-		result = this.Result[key]
-	}
+	// result = Ternary(this.Result[key] != nil, this.Result[key], this.Viper.Get(key))
 
 	return
 }

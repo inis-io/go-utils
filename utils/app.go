@@ -152,6 +152,7 @@ var Struct struct {
 var Json struct {
 	Encode func(value any) (result string)
 	Decode func(value string) (result any)
+	Get    func(value any, key any) (result any, err error)
 }
 
 var Format struct {

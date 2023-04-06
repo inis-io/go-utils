@@ -1,7 +1,10 @@
 package utils
 
 import (
-	"github.com/goccy/go-json"
+	"fmt"
+	json "github.com/json-iterator/go"
+	"github.com/spf13/cast"
+	"strings"
 )
 
 // JsonEncode 编码
@@ -20,4 +23,28 @@ func JsonDecode(data string) (result any) {
 		return nil
 	}
 	return result
+}
+
+// JsonGet 获取json中的值 - 支持多级
+func JsonGet(jsonString any, key any) (result any, err error) {
+
+	if err := json.Unmarshal([]byte(cast.ToString(jsonString)), &result); err != nil {
+		return nil, err
+	}
+
+	keys := strings.Split(cast.ToString(key), ".")
+
+	for _, key := range keys {
+		object, ok := result.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("invalid key: %v", key)
+		}
+		val, ok := object[key]
+		if !ok {
+			return nil, fmt.Errorf("key not found: %v", key)
+		}
+		result = val
+	}
+
+	return result, nil
 }

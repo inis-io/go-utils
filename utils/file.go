@@ -78,18 +78,35 @@ func FileList(path any, opt ...map[string]any) (slice []string) {
 }
 
 // FileBytes 获取文件字节
-func FileBytes(path any) []byte {
+func FileBytes(path any) (result []byte) {
 	// 读取文件
 	file, err := os.Open(cast.ToString(path))
 	if err != nil {
-		return []byte{}
+		return
 	}
-	defer file.Close()
-	// 获取文件大小
-	info, _ := file.Stat()
-	size := info.Size()
-	// 读取文件
-	data := make([]byte, size)
-	file.Read(data)
-	return data
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
+
+	// // 获取文件大小
+	// info, _ := file.Stat()
+	// size := info.Size()
+	// // 读取文件
+	// data := make([]byte, size)
+	// file.Read(data)
+	// return data
+
+	// 分批次读取
+	buf := make([]byte, 1024)
+	for {
+		line, err := file.Read(buf)
+		if err != nil {
+			break
+		}
+		result = append(result, buf[:line]...)
+	}
+	return
 }
