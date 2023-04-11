@@ -33,6 +33,11 @@ func (this *LangModel) Value(key any, args ...any) (result any) {
 
 	// 读取语言包
 	bytes  := File().Byte(this.Directory + this.Lang + "." + this.Mode)
+
+	if bytes.Error != nil {
+		return
+	}
+
 	text   := cast.ToString(key)
 
 	// 解析语言包

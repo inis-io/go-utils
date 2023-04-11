@@ -32,13 +32,16 @@ type FileResponse struct {
 	Slice  []any
 }
 
-func File(model ...FileStruct) *FileStruct {
+func File(request ...FileRequest) *FileStruct {
 
-	if len(model) == 0 {
-		model = append(model, FileStruct{})
+	if len(request) == 0 {
+		request = append(request, FileRequest{})
 	}
 
-	return &model[0]
+	return &FileStruct{
+		request : &request[0],
+		response: &FileResponse{},
+	}
 }
 
 // Path 设置文件路径(包含文件名，如：/tmp/test.txt)
@@ -127,14 +130,15 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 	}
 
 	// 读取文件
-	file, err := os.Open(cast.ToString(path))
+	file, err := os.Open(this.request.Path)
 	if err != nil {
-		return
+		this.response.Error = err
+		return this.response
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-
+			return
 		}
 	}(file)
 
@@ -146,7 +150,7 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 	// file.Read(data)
 	// return data
 
-	bytes := make([]byte, 1024)
+	var bytes []byte
 
 	// 分批次读取
 	buf := make([]byte, 1024)
@@ -241,74 +245,3 @@ func (this *FileStruct) List(opt ...map[string]any) (result *FileResponse) {
 	this.response.Slice = cast.ToSlice(slice)
 	return this.response
 }
-
-// // FileList 获取指定目录下的所有文件
-// func FileList(path any, opt ...map[string]any) (slice []string) {
-//
-// 	// 默认参数
-// 	defOpt := map[string]any{
-// 		// 获取指定后缀的文件
-// 		"ext": []string{"*"},
-// 		// 包含子目录
-// 		"sub": true,
-// 		// 返回路径格式
-// 		"format": "network",
-// 		// 域名
-// 		"domain": "",
-// 		// 过滤前缀
-// 		"prefix": "",
-// 	}
-//
-// 	if len(opt) != 0 {
-// 		// 合并参数
-// 		for key, val := range defOpt {
-// 			if opt[0][key] == nil {
-// 				opt[0][key] = val
-// 			}
-// 		}
-// 	} else {
-// 		// 默认参数
-// 		opt = append(opt, defOpt)
-// 	}
-//
-// 	conf := opt[0]
-// 	err := filepath.Walk(cast.ToString(path), func(path string, info os.FileInfo, err error) error {
-// 		// 忽略当前目录
-// 		if info.IsDir() {
-// 			return nil
-// 		}
-// 		// 忽略子目录
-// 		if !conf["sub"].(bool) && filepath.Dir(path) != path {
-// 			return nil
-// 		}
-// 		// []string 转 []any
-// 		var exts []any
-// 		for _, v := range conf["ext"].([]string) {
-// 			exts = append(exts, v)
-// 		}
-// 		// 忽略指定后缀
-// 		if !InArray("*", exts) && !InArray(filepath.Ext(path), exts) {
-// 			return nil
-// 		}
-// 		slice = append(slice, path)
-// 		return nil
-// 	})
-//
-// 	if err != nil {
-// 		return []string{}
-// 	}
-//
-// 	// 转码为网络路径
-// 	if conf["format"] == "network" {
-// 		for key, val := range slice {
-// 			slice[key] = filepath.ToSlash(val)
-// 			if !IsEmpty(conf["domain"]) {
-// 				// root, _ := os.Getwd()
-// 				// slice[key] = cast.ToString(conf["domain"]) + slice[key][len(root) + len(cast.ToString(conf["prefix"])):]
-// 				slice[key] = cast.ToString(conf["domain"]) + slice[key][len(cast.ToString(conf["prefix"])):]
-// 			}
-// 		}
-// 	}
-//
-// 	return
-// }
