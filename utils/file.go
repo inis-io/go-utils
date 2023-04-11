@@ -1,10 +1,159 @@
 package utils
 
 import (
+	"errors"
 	"github.com/spf13/cast"
+	"io"
 	"os"
 	"path/filepath"
 )
+
+type FileRequest struct {
+	// 文件名
+	Name string
+	// 文件目录
+	Path string
+	// 文件后缀
+	Ext string
+}
+
+// FileStruct - File 结构体
+type FileStruct struct {
+	request  *FileRequest
+	response *FileResponse
+}
+
+type FileResponse struct {
+	Error  error
+	Result string
+	Byte   []byte
+}
+
+func File(model ...FileStruct) *FileStruct {
+
+	if len(model) == 0 {
+		model = append(model, FileStruct{})
+	}
+
+	return &model[0]
+}
+
+// Path 设置文件路径(包含文件名，如：/tmp/test.txt)
+func (this *FileStruct) Path(path any) *FileStruct {
+	this.request.Path = cast.ToString(path)
+	return this
+}
+
+// Name 设置文件名(不包含路径，如：test.txt)
+func (this *FileStruct) Name(name any) *FileStruct {
+	this.request.Name = cast.ToString(name)
+	return this
+}
+
+// Ext 设置文件后缀(如：.txt)
+func (this *FileStruct) Ext(ext any) *FileStruct {
+	this.request.Ext = cast.ToString(ext)
+	return this
+}
+
+// Save 保存文件
+func (this *FileStruct) Save(reader io.Reader, path ...string) (result *FileResponse) {
+
+	if len(path) != 0 {
+		this.request.Path = path[0]
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("文件路径不能为空")
+		return this.response
+	}
+
+	filePath := cast.ToString(path)
+
+	dir := filepath.Dir(filePath)
+    if _, err := os.Stat(dir); os.IsNotExist(err) {
+        // 目录不存在，需要创建
+        if err := os.MkdirAll(dir, 0755); err != nil {
+            this.response.Error = err
+			return this.response
+        }
+    }
+
+	// 创建文件
+    file, err := os.Create(filePath)
+    if err != nil {
+		this.response.Error = err
+		return this.response
+    }
+
+	// 关闭文件
+    defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			this.response.Error = err
+			return
+		}
+	}(file)
+
+	// 将文件通过流的方式写入磁盘
+	_, err = io.Copy(file, reader)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+    return nil
+}
+
+// Byte 获取文件字节
+func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
+
+	if len(path) != 0 {
+		this.request.Path = cast.ToString(path[0])
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("文件路径不能为空")
+		return this.response
+	}
+
+	// 读取文件
+	file, err := os.Open(cast.ToString(path))
+	if err != nil {
+		return
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
+
+	// // 获取文件大小
+	// info, _ := file.Stat()
+	// size := info.Size()
+	// // 读取文件
+	// data := make([]byte, size)
+	// file.Read(data)
+	// return data
+
+	bytes := make([]byte, 1024)
+
+	// 分批次读取
+	buf := make([]byte, 1024)
+	for {
+		line, err := file.Read(buf)
+		if err != nil {
+			break
+		}
+		bytes = append(bytes, buf[:line]...)
+	}
+
+	this.response.Byte   = bytes
+	this.response.Result = string(bytes)
+
+	return this.response
+}
 
 // FileList 获取指定目录下的所有文件
 func FileList(path any, opt ...map[string]any) (slice []string) {
@@ -74,39 +223,5 @@ func FileList(path any, opt ...map[string]any) (slice []string) {
 		}
 	}
 
-	return
-}
-
-// FileBytes 获取文件字节
-func FileBytes(path any) (result []byte) {
-	// 读取文件
-	file, err := os.Open(cast.ToString(path))
-	if err != nil {
-		return
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
-		}
-	}(file)
-
-	// // 获取文件大小
-	// info, _ := file.Stat()
-	// size := info.Size()
-	// // 读取文件
-	// data := make([]byte, size)
-	// file.Read(data)
-	// return data
-
-	// 分批次读取
-	buf := make([]byte, 1024)
-	for {
-		line, err := file.Read(buf)
-		if err != nil {
-			break
-		}
-		result = append(result, buf[:line]...)
-	}
 	return
 }

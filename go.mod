@@ -3,8 +3,6 @@ module github.com/unti-io/go-utils
 go 1.20
 
 require (
-	github.com/fsnotify/fsnotify v1.6.0
-	github.com/goccy/go-json v0.10.2
 	github.com/json-iterator/go v1.1.12
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/viper v1.15.0
@@ -12,6 +10,7 @@ require (
 )
 
 require (
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

@@ -10,19 +10,13 @@ import (
 // JsonEncode 编码
 func JsonEncode(data any) (result string) {
 	text, err := json.Marshal(data)
-	if err != nil {
-		return ""
-	}
-	return string(text)
+	return Ternary(err != nil, "", string(text))
 }
 
 // JsonDecode 解码
-func JsonDecode(data string) (result any) {
-	err := json.Unmarshal([]byte(data), &result)
-	if err != nil {
-		return nil
-	}
-	return result
+func JsonDecode(data any) (result any) {
+	err := json.Unmarshal([]byte(cast.ToString(data)), &result)
+	return Ternary(err != nil, nil, result)
 }
 
 // JsonGet 获取json中的值 - 支持多级

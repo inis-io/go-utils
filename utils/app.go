@@ -41,7 +41,6 @@ func init() {
 	Is.Map 				= IsMap
 	Is.SliceSlice 		= IsSliceSlice
 	Is.MapAny 			= IsMapAny
-	// Env.Toml = En	vToml
 	Get.Type 			= GetType
 	Get.Ip 				= GetIp
 	In.Array        	= InArray
@@ -67,8 +66,6 @@ func init() {
 	Parse.ParamsBefore  = ParseParamsBefore
 	Parse.Params 		= ParseParams
 	Net.Tcping 			= NetTcping
-	File.List 			= FileList
-	File.Bytes 			= FileBytes
 	Mime.Type 			= MimeType
 }
 
@@ -152,7 +149,7 @@ var Struct struct {
 
 var Json struct {
 	Encode func(value any) (result string)
-	Decode func(value string) (result any)
+	Decode func(value any) (result any)
 	Get    func(value any, key any) (result any, err error)
 }
 
@@ -166,10 +163,6 @@ var Parse struct {
 }
 var Net struct {
 	Tcping func(host any, opts ...map[string]any) (ok bool, detail []map[string]any)
-}
-var File struct {
-	List  func(path any, opt ...map[string]any) (slice []string)
-	Bytes func(path any) []byte
 }
 var Mime struct {
 	Type func(suffix any) (mime string)

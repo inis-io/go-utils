@@ -32,19 +32,18 @@ func Lang(model ...LangModel) *LangModel {
 func (this *LangModel) Value(key any, args ...any) (result any) {
 
 	// 读取语言包
-	bytes  := FileBytes(this.Directory + this.Lang + "." + this.Mode)
-	text   := string(bytes)
-	keyStr := cast.ToString(key)
+	bytes  := File().Byte(this.Directory + this.Lang + "." + this.Mode)
+	text   := cast.ToString(key)
 
 	// 解析语言包
-	lang := cast.ToStringMap(JsonDecode(text))
+	lang := cast.ToStringMap(JsonDecode(bytes.Result))
 
 	// 获取语言
-	result = lang[keyStr]
+	result = lang[text]
 
 	// 如果没有找到语言，通过javascript风格获取
 	if IsEmpty(result) {
-		item, err := JsonGet(text, keyStr)
+		item, err := JsonGet(bytes.Result, text)
 		if err == nil {
 			result = item
 		}
@@ -52,7 +51,7 @@ func (this *LangModel) Value(key any, args ...any) (result any) {
 
 	// 如果没有找到语言，则返回原文
 	if IsEmpty(result) {
-		return keyStr
+		return text
 	}
 
 	// 如果有参数，则格式化

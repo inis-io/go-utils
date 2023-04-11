@@ -138,13 +138,13 @@ func (this *CurlStruct) Headers(headers map[string]any) *CurlStruct {
 	return this
 }
 
-// Param - 定义请求参数
+// Query - 定义请求参数
 func (this *CurlStruct) Query(key any, value any) *CurlStruct {
 	this.request.Query[cast.ToString(key)] = cast.ToString(value)
 	return this
 }
 
-// Params - 批量定义请求参数
+// Querys - 批量定义请求参数
 func (this *CurlStruct) Querys(params map[string]any) *CurlStruct {
 	for key, val := range params {
 		this.request.Query[cast.ToString(key)] = cast.ToString(val)
@@ -212,7 +212,11 @@ func (this *CurlStruct) Send() *CurlResponse {
 			body := &bytes.Buffer{}
 			writer := multipart.NewWriter(body)
 			for key, val := range this.request.Data {
-				writer.WriteField(key, val)
+				err := writer.WriteField(key, val)
+				if err != nil {
+					this.response.Error = err
+					return this.response
+				}
 			}
 			// add file field to request
 			if file, ok := this.request.Body.(*multipart.FileHeader); ok {
@@ -226,7 +230,13 @@ func (this *CurlStruct) Send() *CurlResponse {
 					this.response.Error = err
 					return this.response
 				}
-				defer item.Close()
+				defer func(item multipart.File) {
+					err := item.Close()
+					if err != nil {
+						this.response.Error = err
+						return
+					}
+				}(item)
 				_, err = io.Copy(filePart, item)
 				if err != nil {
 					this.response.Error = err
@@ -261,7 +271,13 @@ func (this *CurlStruct) Send() *CurlResponse {
 		this.response.Error = err
 		return this.response
 	}
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			this.response.Error = err
+			return
+		}
+	}(response.Body)
 
 	// Read response body
 	body, err := io.ReadAll(response.Body)
