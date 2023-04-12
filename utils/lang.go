@@ -41,14 +41,14 @@ func (this *LangModel) Value(key any, args ...any) (result any) {
 	text   := cast.ToString(key)
 
 	// 解析语言包
-	lang := cast.ToStringMap(JsonDecode(bytes.Result))
+	lang := cast.ToStringMap(JsonDecode(bytes.Text))
 
 	// 获取语言
 	result = lang[text]
 
 	// 如果没有找到语言，通过javascript风格获取
 	if IsEmpty(result) {
-		item, err := JsonGet(bytes.Result, text)
+		item, err := JsonGet(bytes.Text, text)
 		if err == nil {
 			result = item
 		}
