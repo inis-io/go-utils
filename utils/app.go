@@ -161,9 +161,11 @@ var Parse struct {
 	ParamsBefore func(params url.Values) (result map[string]any)
 	Params       func(params map[string]any) (result map[string]any)
 }
+
 var Net struct {
 	Tcping func(host any, opts ...map[string]any) (ok bool, detail []map[string]any)
 }
+
 var Mime struct {
 	Type func(suffix any) (mime string)
 }

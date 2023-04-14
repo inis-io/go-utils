@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -20,9 +21,9 @@ type FileStruct struct {
 type FileRequest struct {
 	// 文件名
 	Name string
-	// 文件路径
+	// 文件路径（包含文件名）
 	Path string
-	// 目录路径
+	// 目录路径（不包含文件名）
 	Dir string
 	// 文件后缀
 	Ext string
@@ -30,7 +31,14 @@ type FileRequest struct {
 	Limit int
 	// 读取偏移量
 	Page int
-
+	// 返回结果格式
+	Format string
+	// 是否包含子目录
+	Sub bool
+	// 域名 - 用于拼接文件路径
+	Domain string
+	// 前缀 - 用于过滤前缀
+	Prefix string
 }
 
 // FileResponse - File 响应
@@ -55,6 +63,18 @@ func File(request ...FileRequest) *FileStruct {
 
 	if IsEmpty(request[0].Page) {
 		request[0].Page = 1
+	}
+
+	if IsEmpty(request[0].Format) {
+		request[0].Format = "network"
+	}
+
+	if IsEmpty(request[0].Sub) {
+		request[0].Sub = true
+	}
+
+	if IsEmpty(request[0].Ext) {
+		request[0].Ext = "*"
 	}
 
 	return &FileStruct{
@@ -84,6 +104,18 @@ func (this *FileStruct) Name(name any) *FileStruct {
 // Ext 设置文件后缀(如：.txt)
 func (this *FileStruct) Ext(ext any) *FileStruct {
 	this.request.Ext = cast.ToString(ext)
+	return this
+}
+
+// Domain 设置域名(用于拼接文件路径)
+func (this *FileStruct) Domain(domain any) *FileStruct {
+	this.request.Domain = cast.ToString(domain)
+	return this
+}
+
+// Prefix 设置前缀(用于过滤前缀)
+func (this *FileStruct) Prefix(prefix any) *FileStruct {
+	this.request.Prefix = cast.ToString(prefix)
 	return this
 }
 
@@ -216,46 +248,17 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 }
 
 // List 获取指定目录下的所有文件
-func (this *FileStruct) List(opt ...map[string]any) (result *FileResponse) {
+func (this *FileStruct) List(path ...any) (result *FileResponse) {
 
-	// 默认参数
-	defOpt := map[string]any{
-		// 获取指定后缀的文件
-		"ext": []string{"*"},
-		// 包含子目录
-		"sub": true,
-		// 返回路径格式
-		"format": "network",
-		// 域名
-		"domain": "",
-		// 过滤前缀
-		"prefix": "",
-		// 目录路径
-		"dir": "",
-	}
-
-	if len(opt) != 0 {
-		// 合并参数
-		for key, val := range defOpt {
-			if opt[0][key] == nil {
-				opt[0][key] = val
-			}
-		}
-	} else {
-		// 默认参数
-		opt = append(opt, defOpt)
-	}
-
-	conf := opt[0]
-
-	if !IsEmpty(conf["dir"]) {
-		this.request.Dir = cast.ToString(conf["dir"])
+	if len(path) != 0 {
+		this.request.Path = cast.ToString(path[0])
 	}
 
 	if IsEmpty(this.request.Dir) {
 		this.response.Error = errors.New("目录路径不能为空")
 		return this.response
 	}
+
 	var slice []string
 	this.response.Error = filepath.Walk(this.request.Dir, func(path string, info os.FileInfo, err error) error {
 		// 忽略当前目录
@@ -263,13 +266,19 @@ func (this *FileStruct) List(opt ...map[string]any) (result *FileResponse) {
 			return nil
 		}
 		// 忽略子目录
-		if !conf["sub"].(bool) && filepath.Dir(path) != path {
+		if !this.request.Sub && filepath.Dir(path) != path {
 			return nil
 		}
 		// []string 转 []any
 		var exts []any
-		for _, v := range conf["ext"].([]string) {
-			exts = append(exts, v)
+		// this.request.Ext 逗号分隔的字符串 转 []string
+		for _, val := range strings.Split(this.request.Ext, ",") {
+			// 忽略空字符串
+			if IsEmpty(val) {
+				continue
+			}
+			// 去除空格
+			exts = append(exts, strings.TrimSpace(val))
 		}
 		// 忽略指定后缀
 		if !InArray("*", exts) && !InArray(filepath.Ext(path), exts) {
@@ -280,16 +289,22 @@ func (this *FileStruct) List(opt ...map[string]any) (result *FileResponse) {
 	})
 
 	// 转码为网络路径
-	if conf["format"] == "network" {
+	if this.request.Format == "network" {
 		for key, val := range slice {
 			slice[key] = filepath.ToSlash(val)
-			if !IsEmpty(conf["domain"]) {
-				slice[key] = cast.ToString(conf["domain"]) + slice[key][len(cast.ToString(conf["prefix"])):]
+			if !IsEmpty(this.request.Domain) {
+				slice[key] = this.request.Domain + slice[key][len(this.request.Prefix):]
 			}
 		}
 	}
 
-	this.response.Slice = cast.ToSlice(slice)
+	for _, val := range slice {
+		this.response.Slice = append(this.response.Slice, val)
+	}
+	this.response.Result = slice
+	this.response.Text   = strings.Join(slice, ",")
+	this.response.Byte   = []byte(this.response.Text)
+
 	return this.response
 }
 
