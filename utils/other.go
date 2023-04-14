@@ -202,12 +202,3 @@ func InMapValue(value any, array map[string]string) bool {
 	}
 	return false
 }
-
-// Ternary
-// 三元运算符
-func Ternary[T any](IF bool, TRUE T, FALSE T) T {
-	if IF {
-		return TRUE
-	}
-	return FALSE
-}
