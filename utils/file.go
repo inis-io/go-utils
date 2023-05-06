@@ -281,7 +281,7 @@ func (this *FileStruct) List(path ...any) (result *FileResponse) {
 			exts = append(exts, strings.TrimSpace(val))
 		}
 		// 忽略指定后缀
-		if !InArray("*", exts) && !InArray(filepath.Ext(path), exts) {
+		if !InArray("*", exts) && !InArray[any](filepath.Ext(path), exts) {
 			return nil
 		}
 		slice = append(slice, path)

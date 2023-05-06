@@ -43,7 +43,7 @@ func init() {
 	Is.MapAny 			= IsMapAny
 	Get.Type 			= GetType
 	Get.Ip 				= GetIp
-	In.Array        	= InArray
+	In.Array        	= InArray[any]
 	Array.Filter    	= ArrayFilter
 	Array.Remove    	= ArrayRemove
 	Password.Create 	= PasswordCreate
