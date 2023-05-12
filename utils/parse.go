@@ -129,7 +129,6 @@ func ParseParams(params map[string]any) (result map[string]any) {
 	var worker func(params map[string]any, key string, val any)
 	worker = func(params map[string]any, key string, val any) {
 
-		// wg.Add(1)
 		// 加锁
 		wr.Lock.Lock()
 		defer wg.Done()
@@ -147,15 +146,15 @@ func ParseParams(params map[string]any) (result map[string]any) {
 		// 判断是否为最后一个元素
 		if len(keys) == 1 {
 			params[keys[0]] = val
-		} else {
-			// 如果不是最后一个元素，则继续递归
-			if _, ok := params[keys[0]]; !ok {
-				params[keys[0]] = make(map[string]any, 3)
-			}
-			wg.Add(1)
-			go worker(cast.ToStringMap(params[keys[0]]), strings.Join(keys[1:], "."), val)
+			return
 		}
 
+		// 如果不是最后一个元素，则继续递归
+		if _, ok := params[keys[0]]; !ok {
+			params[keys[0]] = make(map[string]any, 3)
+		}
+		wg.Add(1)
+		go worker(cast.ToStringMap(params[keys[0]]), strings.Join(keys[1:], "."), val)
 		return
 	}
 
