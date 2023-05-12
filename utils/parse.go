@@ -153,7 +153,7 @@ func ParseParams(params map[string]any) (result map[string]any) {
 				params[keys[0]] = make(map[string]any, 3)
 			}
 			wg.Add(1)
-			go worker(params[keys[0]].(map[string]any), strings.Join(keys[1:], "."), val)
+			go worker(cast.ToStringMap(params[keys[0]]), strings.Join(keys[1:], "."), val)
 		}
 
 		return

@@ -29,3 +29,25 @@ func ArrayRemove(array []string, args ...string) []string {
 	}
 	return array
 }
+
+// ArrayUnique - 数组去重
+func ArrayUnique[T any](array []T) (slice []any) {
+	list := make(map[any]bool)
+	for _, item := range array {
+		if !list[item] {
+			list[item] = true
+			slice = append(slice, item)
+		}
+	}
+	return slice
+}
+
+// ArrayEmpty - 数组去空
+func ArrayEmpty[T any](array []T) (slice []any) {
+	for _, item := range array {
+		if !IsEmpty(item) {
+			slice = append(slice, item)
+		}
+	}
+	return slice
+}
