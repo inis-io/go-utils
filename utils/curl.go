@@ -15,25 +15,25 @@ import (
 
 // CurlRequest - 发起请求的结构体
 type CurlRequest struct {
-	Body 	 any
-	Url      string
-	Method	 string
-	Client   *http.Client
-	Data     map[string]string
-	Query    map[string]string
-	Headers  map[string]string
+	Body    any
+	Url     string
+	Method  string
+	Client  *http.Client
+	Data    map[string]any
+	Query   map[string]any
+	Headers map[string]any
 }
 
 // CurlResponse - 响应的结构体
 type CurlResponse struct {
-	StatusCode   int
-	Request	  	 *http.Request
-	Headers    	 *http.Header
-	Body         *io.ReadCloser
-	Byte 	 	 []byte
-	Text 	 	 string
-	Json 	 	 map[string]any
-	Error 	     error
+	StatusCode int
+	Request    *http.Request
+	Headers    *http.Header
+	Body       *io.ReadCloser
+	Byte       []byte
+	Text       string
+	Json       map[string]any
+	Error      error
 }
 
 // CurlStruct - Curl 结构体
@@ -54,15 +54,15 @@ func Curl(request ...CurlRequest) *CurlStruct {
 	}
 
 	if IsEmpty(request[0].Data) {
-		request[0].Data = make(map[string]string)
+		request[0].Data = make(map[string]any)
 	}
 
 	if IsEmpty(request[0].Query) {
-		request[0].Query = make(map[string]string)
+		request[0].Query = make(map[string]any)
 	}
 
 	if IsEmpty(request[0].Headers) {
-		request[0].Headers = make(map[string]string)
+		request[0].Headers = make(map[string]any)
 	}
 
 	if IsEmpty(request[0].Client) {
@@ -70,44 +70,44 @@ func Curl(request ...CurlRequest) *CurlStruct {
 	}
 
 	return &CurlStruct{
-		request : &request[0],
+		request: &request[0],
 		response: &CurlResponse{
-			Json   : make(map[string]any),
+			Json: make(map[string]any),
 		},
 	}
 }
 
 // Get - 发起 GET 请求
 func (this *CurlStruct) Get(url string) *CurlStruct {
-	this.request.Url 	= url
+	this.request.Url = url
 	this.request.Method = "GET"
 	return this
 }
 
 // Post - 发起 POST 请求
 func (this *CurlStruct) Post(url string) *CurlStruct {
-	this.request.Url 	= url
+	this.request.Url = url
 	this.request.Method = "POST"
 	return this
 }
 
 // Put - 发起 PUT 请求
 func (this *CurlStruct) Put(url string) *CurlStruct {
-	this.request.Url 	= url
+	this.request.Url = url
 	this.request.Method = "PUT"
 	return this
 }
 
 // Patch - 发起 PATCH 请求
 func (this *CurlStruct) Patch(url string) *CurlStruct {
-	this.request.Url 	= url
+	this.request.Url = url
 	this.request.Method = "PATCH"
 	return this
 }
 
 // Delete - 发起 DELETE 请求
 func (this *CurlStruct) Delete(url string) *CurlStruct {
-	this.request.Url 	= url
+	this.request.Url = url
 	this.request.Method = "DELETE"
 	return this
 }
@@ -190,7 +190,7 @@ func (this *CurlStruct) Send() *CurlResponse {
 	if len(this.request.Query) > 0 {
 		query := url.Values{}
 		for key, val := range this.request.Query {
-			query.Add(key, val)
+			query.Add(key, cast.ToString(val))
 		}
 		this.request.Url += "?" + query.Encode()
 	}
@@ -200,19 +200,19 @@ func (this *CurlStruct) Send() *CurlResponse {
 	contentType, ok := this.request.Headers["Content-Type"]
 	if ok {
 		switch {
-		case strings.Contains(contentType, "application/json"):
+		case strings.Contains(cast.ToString(contentType), "application/json"):
 			buffer, _ = json.Marshal(this.request.Body)
-		case strings.Contains(contentType, "application/x-www-form-urlencoded"):
+		case strings.Contains(cast.ToString(contentType), "application/x-www-form-urlencoded"):
 			form := url.Values{}
 			for key, val := range this.request.Data {
-				form.Add(key, val)
+				form.Add(key, cast.ToString(val))
 			}
 			buffer = []byte(form.Encode())
-		case strings.Contains(contentType, "multipart/form-data"):
+		case strings.Contains(cast.ToString(contentType), "multipart/form-data"):
 			body := &bytes.Buffer{}
 			writer := multipart.NewWriter(body)
 			for key, val := range this.request.Data {
-				err := writer.WriteField(key, val)
+				err := writer.WriteField(key, cast.ToString(val))
 				if err != nil {
 					this.response.Error = err
 					return this.response
@@ -262,7 +262,7 @@ func (this *CurlStruct) Send() *CurlResponse {
 	}
 
 	for key, val := range this.request.Headers {
-		req.Header.Set(key, val)
+		req.Header.Set(key, cast.ToString(val))
 	}
 
 	// Make HTTP request
@@ -287,12 +287,12 @@ func (this *CurlStruct) Send() *CurlResponse {
 	}
 
 	// Set response
-	this.response.Byte    = body
-	this.response.Body    = &response.Body
-	this.response.Text    = string(body)
+	this.response.Byte = body
+	this.response.Body = &response.Body
+	this.response.Text = string(body)
 	this.response.Headers = &response.Header
 	this.response.Request = response.Request
-	this.response.Json    = cast.ToStringMap(JsonDecode(string(body)))
+	this.response.Json = cast.ToStringMap(JsonDecode(string(body)))
 	this.response.StatusCode = response.StatusCode
 
 	return this.response

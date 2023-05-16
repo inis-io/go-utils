@@ -132,7 +132,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 	rules := strings.Split(rule, ",")
 
 	// 判断 rules 是否包含 required
-	if !InArray("required", cast.ToSlice(rules)) {
+	if !InArray("required", cast.ToStringSlice(rules)) {
 		// 判断 value 是否为空
 		if IsEmpty(value) {
 			// 结束本次循环，进入下一次循环
