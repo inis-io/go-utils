@@ -69,6 +69,8 @@ func init() {
 	Parse.Params = ParseParams
 	Net.Tcping = NetTcping
 	Mime.Type = MimeType
+	Version.Go = VersionGo
+	Version.Compare = VersionCompare
 }
 
 var Is struct {
@@ -172,4 +174,9 @@ var Net struct {
 
 var Mime struct {
 	Type func(suffix any) (mime string)
+}
+
+var Version struct {
+	Go      func() (version string)
+	Compare func(v1 any, v2 any) (result int)
 }
