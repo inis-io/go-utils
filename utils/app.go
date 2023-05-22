@@ -69,6 +69,8 @@ func init() {
 	Parse.Params = ParseParams
 	Net.Tcping = NetTcping
 	Mime.Type = MimeType
+	Map.WithField = MapWithField[map[string]any]
+	Map.WithoutField = MapWithoutField[map[string]any]
 	Version.Go = VersionGo
 	Version.Compare = VersionCompare
 }
@@ -174,6 +176,11 @@ var Net struct {
 
 var Mime struct {
 	Type func(suffix any) (mime string)
+}
+
+var Map struct {
+	WithField    func(data map[string]any, field []string) (result map[string]any)
+	WithoutField func(data map[string]any, field []string) (result map[string]any)
 }
 
 var Version struct {
