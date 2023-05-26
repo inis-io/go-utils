@@ -78,7 +78,7 @@ func File(request ...FileRequest) *FileStruct {
 	}
 
 	return &FileStruct{
-		request : &request[0],
+		request:  &request[0],
 		response: &FileResponse{},
 	}
 }
@@ -144,23 +144,23 @@ func (this *FileStruct) Save(reader io.Reader, path ...string) (result *FileResp
 	}
 
 	dir := filepath.Dir(this.request.Path)
-    if _, err := os.Stat(dir); os.IsNotExist(err) {
-        // 目录不存在，需要创建
-        if err := os.MkdirAll(dir, 0755); err != nil {
-            this.response.Error = err
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// 目录不存在，需要创建
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			this.response.Error = err
 			return this.response
-        }
-    }
+		}
+	}
 
 	// 创建文件
-    file, err := os.Create(this.request.Path)
-    if err != nil {
+	file, err := os.Create(this.request.Path)
+	if err != nil {
 		this.response.Error = err
 		return this.response
-    }
+	}
 
 	// 关闭文件
-    defer func(file *os.File) {
+	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
 			this.response.Error = err
@@ -175,7 +175,29 @@ func (this *FileStruct) Save(reader io.Reader, path ...string) (result *FileResp
 		return this.response
 	}
 
-    return this.response
+	return this.response
+}
+
+// Remove 删除文件
+func (this *FileStruct) Remove(path ...any) (result *FileResponse) {
+
+	if len(path) != 0 {
+		this.request.Path = cast.ToString(path[0])
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("文件路径不能为空")
+		return this.response
+	}
+
+	// 删除文件
+	err := os.Remove(this.request.Path)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	return this.response
 }
 
 // Byte 获取文件字节
@@ -212,22 +234,22 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 	size := info.Size()
 
 	// 小于50MB，整体读取
-	if size < 50 * 1024 * 1024 {
+	if size < 50*1024*1024 {
 		bytes := make([]byte, size)
 		_, err = file.Read(bytes)
 		if err != nil {
 			this.response.Error = err
 			return this.response
 		}
-		this.response.Byte   = bytes
-		this.response.Text   = string(bytes)
+		this.response.Byte = bytes
+		this.response.Text = string(bytes)
 		this.response.Result = bytes
 		return this.response
 	}
 
 	// 大于等于50MB，分块读取
 	var bytes []byte
-	buffer := make([]byte, 1024 * 1024)
+	buffer := make([]byte, 1024*1024)
 	for {
 		index, err := file.Read(buffer)
 		if err != nil && err != io.EOF {
@@ -240,8 +262,8 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 		}
 	}
 
-	this.response.Byte   = bytes
-	this.response.Text   = string(bytes)
+	this.response.Byte = bytes
+	this.response.Text = string(bytes)
 	this.response.Result = bytes
 
 	return this.response
@@ -302,14 +324,14 @@ func (this *FileStruct) List(path ...any) (result *FileResponse) {
 		this.response.Slice = append(this.response.Slice, val)
 	}
 	this.response.Result = slice
-	this.response.Text   = strings.Join(slice, ",")
-	this.response.Byte   = []byte(this.response.Text)
+	this.response.Text = strings.Join(slice, ",")
+	this.response.Byte = []byte(this.response.Text)
 
 	return this.response
 }
 
-// IsExist 判断文件是否存在
-func (this *FileStruct) IsExist(path ...any) (ok bool) {
+// Exist 判断文件是否存在
+func (this *FileStruct) Exist(path ...any) (ok bool) {
 
 	if len(path) != 0 {
 		this.request.Path = cast.ToString(path[0])
@@ -342,11 +364,12 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 	// 读取块
 	readBlock := func(file *os.File, start int, end int) ([]string, error) {
 
-		lines   := make([]string, 0)
+		lines := make([]string, 0)
 		scanner := bufio.NewScanner(file)
 
 		// 移动扫描器到指定的起始行
-		for i := 1; i < start && scanner.Scan(); i++ {}
+		for i := 1; i < start && scanner.Scan(); i++ {
+		}
 
 		// 开始读取需要的行
 		for i := start; i <= end && scanner.Scan(); i++ {
@@ -375,15 +398,15 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 		}
 	}(file)
 
-	end   := this.request.Page * this.request.Limit
+	end := this.request.Page * this.request.Limit
 	start := end - this.request.Limit + 1
 
-	lines     := make([]string, 0)
+	lines := make([]string, 0)
 	// 计算每个块的大小（以10MB为一个块）
 	blockSize := 10 * 1024 * 1024
 	numBlocks := (end - start + 1) / blockSize
 
-	if (end - start + 1) % blockSize != 0 {
+	if (end-start+1)%blockSize != 0 {
 		numBlocks++
 	}
 
@@ -393,8 +416,8 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 	for i := 0; i < numBlocks; i++ {
 		go func(i int) {
 
-			startLine := start + i * blockSize
-			endLine   := startLine + blockSize - 1
+			startLine := start + i*blockSize
+			endLine := startLine + blockSize - 1
 			if endLine > end {
 				endLine = end
 			}
@@ -414,8 +437,8 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 	wg.Wait()
 
 	this.response.Result = lines
-	this.response.Text   = JsonEncode(this.response.Result)
-	this.response.Byte   = []byte(this.response.Text)
+	this.response.Text = JsonEncode(this.response.Result)
+	this.response.Byte = []byte(this.response.Text)
 
 	for _, v := range lines {
 		this.response.Slice = append(this.response.Slice, v)
