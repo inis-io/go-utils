@@ -73,6 +73,7 @@ func init() {
 	Map.WithoutField = MapWithoutField[map[string]any]
 	Version.Go = VersionGo
 	Version.Compare = VersionCompare
+	Unity.Ids = UnityIds
 }
 
 var Is struct {
@@ -186,4 +187,8 @@ var Map struct {
 var Version struct {
 	Go      func() (version string)
 	Compare func(v1 any, v2 any) (result int)
+}
+
+var Unity struct {
+	Ids func(param ...any) (result []any)
 }
