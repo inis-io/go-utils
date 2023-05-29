@@ -6,9 +6,9 @@ import (
 )
 
 type LangModel struct {
-	Directory string	// 语言包目录
-	Lang 	  string	// 当前语言
-	Mode 	  string	// 文件类型
+	Directory string // 语言包目录
+	Lang      string // 当前语言
+	Mode      string // 文件类型
 }
 
 // Lang 实例化
@@ -22,8 +22,8 @@ func Lang(model ...LangModel) *LangModel {
 	}
 
 	// 设置默认值
-	item.Lang      = Ternary[string](!IsEmpty(item.Lang), item.Lang, "zh-cn")
-	item.Mode 	   = Ternary[string](!IsEmpty(item.Mode), item.Mode, "json")
+	item.Lang = Ternary[string](!IsEmpty(item.Lang), item.Lang, "zh-cn")
+	item.Mode = Ternary[string](!IsEmpty(item.Mode), item.Mode, "json")
 	item.Directory = Ternary[string](!IsEmpty(item.Directory), item.Directory, "config/i18n/")
 
 	return item
@@ -32,13 +32,13 @@ func Lang(model ...LangModel) *LangModel {
 func (this *LangModel) Value(key any, args ...any) (result any) {
 
 	// 读取语言包
-	bytes  := File().Byte(this.Directory + this.Lang + "." + this.Mode)
+	bytes := File().Byte(this.Directory + this.Lang + "." + this.Mode)
 
 	if bytes.Error != nil {
 		return
 	}
 
-	text   := cast.ToString(key)
+	text := cast.ToString(key)
 
 	// 解析语言包
 	lang := cast.ToStringMap(JsonDecode(bytes.Text))
@@ -56,7 +56,7 @@ func (this *LangModel) Value(key any, args ...any) (result any) {
 
 	// 如果没有找到语言，则返回原文
 	if IsEmpty(result) {
-		return text
+		return fmt.Sprintf(text, args...)
 	}
 
 	// 如果有参数，则格式化

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/spf13/cast"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -192,6 +193,82 @@ func (this *FileStruct) Remove(path ...any) (result *FileResponse) {
 
 	// 删除文件
 	err := os.Remove(this.request.Path)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	return this.response
+}
+
+// Download 下载文件
+/**
+ * @param path1 远程文件路径（下载地址）
+ * @param path2 本地文件路径（保存路径，包含文件名）
+ * @return *FileResponse
+ * @example：
+ * 1. item := utils.File().Download("https://inis.cn/name.zip", "public/test.zip")
+ * 2. item := utils.File().Dir("public").Name("test.zip").Download("https://inis.cn/name.zip")
+ * 3. item := utils.File(utils.FileRequest{
+		Path: "https://inis.cn/name.zip",
+		Name: "test.zip",
+		Dir: "public",
+	}).Download()
+*/
+func (this *FileStruct) Download(path ...any) (result *FileResponse) {
+
+	if len(path) != 0 {
+		this.request.Path = cast.ToString(path[0])
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("文件路径不能为空")
+		return this.response
+	}
+
+	// 创建一个HTTP GET请求
+	req, err := http.NewRequest("GET", this.request.Path, nil)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	// 发送HTTP请求并获取响应
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+	defer resp.Body.Close()
+
+	if IsEmpty(this.request.Name) {
+		this.request.Name = filepath.Base(this.request.Path)
+	}
+
+	var savePath string
+	if len(path) > 1 {
+		savePath = cast.ToString(path[1])
+	} else {
+		savePath = filepath.Join(this.request.Dir, this.request.Name)
+	}
+
+	// 如果目录不存在，需要创建
+	dir := filepath.Dir(savePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			this.response.Error = err
+			return this.response
+		}
+	}
+	// 创建本地文件并将HTTP响应的Body写入本地文件
+	saveFile, err := os.Create(savePath)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+	defer saveFile.Close()
+
+	_, err = io.Copy(saveFile, resp.Body)
 	if err != nil {
 		this.response.Error = err
 		return this.response
