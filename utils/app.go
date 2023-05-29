@@ -74,6 +74,7 @@ func init() {
 	Version.Go = VersionGo
 	Version.Compare = VersionCompare
 	Unity.Ids = UnityIds
+	Unity.Keys = UnityKeys
 }
 
 var Is struct {
@@ -190,5 +191,6 @@ var Version struct {
 }
 
 var Unity struct {
-	Ids func(param ...any) (result []any)
+	Ids  func(param ...any) (result []any)
+	Keys func(param any, reg ...any) (result []any)
 }
