@@ -9,12 +9,16 @@ import (
 func UnityIds(param ...any) (ids []any) {
 
 	fn := func(param any) (ids []any) {
-		if GetType(param) == "string" {
+
+		types := []string{"string", "int", "int64", "float", "float64"}
+
+		if InArray(GetType(param), types) {
 			// 正则提取数字部分
 			item := regexp.MustCompile(`\d+`).FindAllString(cast.ToString(param), -1)
 			for _, val := range item {
 				ids = append(ids, cast.ToInt(val))
 			}
+
 		}
 		if GetType(param) == "slice" {
 			item := cast.ToStringSlice(param)
