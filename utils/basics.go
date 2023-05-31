@@ -62,7 +62,7 @@ func Caller() *caller {
 }
 
 // Calc - 计算器
-func Calc(input string) (output float64) {
+func Calc(input any) (output float64) {
 
 	var stack, postfix []string
 	// 是否为操作符
@@ -81,7 +81,7 @@ func Calc(input string) (output float64) {
 
 	reg := regexp.MustCompile(`\d+(\.\d*)?|[+\-*/()]`)
 
-	for _, token := range reg.FindAllString(input, -1) {
+	for _, token := range reg.FindAllString(cast.ToString(input), -1) {
 
 		if InArray(token, operator) {
 
