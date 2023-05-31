@@ -2,7 +2,9 @@ package utils
 
 import (
 	"github.com/spf13/cast"
+	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -46,7 +48,7 @@ type caller struct {
 	// 函数名
 	FuncName string
 	// 行号
-	Line     int
+	Line int
 }
 
 // Caller 获取代码调用者
@@ -57,4 +59,89 @@ func Caller() *caller {
 		FuncName: funcName,
 		Line:     line,
 	}
+}
+
+// Calc - 计算器
+func Calc(input string) (output float64) {
+
+	var stack, postfix []string
+	// 是否为操作符
+	operator := []string{"+", "-", "*", "/"}
+
+	// 操作符优先级
+	priority := func(operator string) int {
+		switch operator {
+		case "+", "-":
+			return 1
+		case "*", "/":
+			return 2
+		}
+		return 0
+	}
+
+	reg := regexp.MustCompile(`\d+(\.\d*)?|[+\-*/()]`)
+
+	for _, token := range reg.FindAllString(input, -1) {
+
+		if InArray(token, operator) {
+
+			for len(stack) > 0 && priority(stack[len(stack)-1]) >= priority(token) {
+				postfix = append(postfix, stack[len(stack)-1])
+				stack = stack[:len(stack)-1]
+			}
+			stack = append(stack, token)
+
+		} else if token == "(" {
+
+			stack = append(stack, token)
+
+		} else if token == ")" {
+
+			for len(stack) > 0 && stack[len(stack)-1] != "(" {
+				postfix = append(postfix, stack[len(stack)-1])
+				stack = stack[:len(stack)-1]
+			}
+			stack = stack[:len(stack)-1]
+
+		} else {
+
+			postfix = append(postfix, token)
+		}
+	}
+
+	for len(stack) > 0 {
+		postfix = append(postfix, stack[len(stack)-1])
+		stack = stack[:len(stack)-1]
+	}
+
+	var result []float64
+
+	for _, token := range postfix {
+
+		if InArray(token, operator) {
+
+			right := result[len(result)-1]
+			result = result[:len(result)-1]
+			left := result[len(result)-1]
+			result = result[:len(result)-1]
+
+			switch token {
+			case "+":
+				result = append(result, left+right)
+			case "-":
+				result = append(result, left-right)
+			case "*":
+				result = append(result, left*right)
+			case "/":
+				result = append(result, left/right)
+			}
+
+		} else {
+
+			num, _ := strconv.ParseFloat(token, 64)
+			result = append(result, num)
+		}
+	}
+
+	return result[0]
 }

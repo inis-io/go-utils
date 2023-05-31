@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"archive/zip"
 	"bufio"
 	"errors"
 	"github.com/spf13/cast"
@@ -520,6 +521,300 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 	for _, v := range lines {
 		this.response.Slice = append(this.response.Slice, v)
 	}
+
+	return this.response
+}
+
+// DirInfo 获取目录信息
+func (this *FileStruct) DirInfo(dir ...any) (result *FileResponse) {
+
+	if len(dir) != 0 {
+		this.request.Dir = cast.ToString(dir[0])
+	}
+
+	if IsEmpty(this.request.Dir) {
+		this.request.Dir = "./"
+	}
+
+	// 如果目录不是以 / 结尾，则补上
+	if this.request.Dir[len(this.request.Dir)-1:] != "/" {
+		this.request.Dir += "/"
+	}
+
+	// 判断目录是否存在
+	if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
+		this.response.Error = err
+		return this.response
+	}
+
+	// 获取目录信息
+	fileInfo, err := os.Stat(this.request.Dir)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	var dirs []string
+	var files []string
+
+	// 只获取当前目录下的文件夹和文件 - 忽略子目录
+	fileList, err := os.ReadDir(this.request.Dir)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+	for _, file := range fileList {
+		path := filepath.Join(this.request.Dir, file.Name())
+		// path 转网络路径
+		path = filepath.ToSlash(path)
+		// 替换 this.request.Dir 为空字符串
+		path = strings.Replace(path, this.request.Dir, "", 1)
+
+		if file.IsDir() {
+			dirs = append(dirs, path)
+		} else {
+			files = append(files, path)
+		}
+	}
+
+	// 获取目录信息
+	this.response.Result = map[string]any{
+		"info":  fileInfo,
+		"dirs":  dirs,
+		"files": files,
+	}
+	this.response.Text = JsonEncode(this.response.Result)
+	this.response.Byte = []byte(this.response.Text)
+
+	return this.response
+}
+
+// EnZip 压缩文件
+/**
+ * @return *FileResponse
+ * @example：
+ * 1. item := utils.File().Dir("public").Name("name.zip").EnZip()
+ * 2. item := utils.File().Dir("public").Path("public/name.zip").EnZip()
+ * 3. item := utils.File(utils.FileRequest{
+		Path: "public/name.zip",
+		Dir: "public",
+	}).EnZip()
+*/
+func (this *FileStruct) EnZip() (result *FileResponse) {
+
+	if IsEmpty(this.request.Dir) {
+		this.response.Error = errors.New("压缩目录不能为空")
+		return this.response
+	}
+
+	if IsEmpty(this.request.Path) && !IsEmpty(this.request.Name) {
+
+		// 判断 Dir 是否以 / 结尾
+		if this.request.Dir[len(this.request.Dir)-1:] != "/" {
+			this.request.Dir += "/"
+		}
+
+		// 判断 Name 是否以 .zip 结尾
+		if this.request.Name[len(this.request.Name)-4:] != ".zip" {
+			this.request.Name += ".zip"
+		}
+
+		this.request.Path = this.request.Dir + this.request.Name
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("压缩后的文件路径不能为空")
+		return this.response
+	}
+
+	// 判断目录是否存在
+	if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
+		this.response.Error = err
+		return this.response
+	}
+
+	var files []string
+	err := filepath.Walk(this.request.Dir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		this.response.Error = err
+		return this.response.Error
+	})
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	zipFile, err := os.Create(this.request.Path)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+	defer func(zipFile *os.File) {
+		err := zipFile.Close()
+		if err != nil {
+			this.response.Error = err
+			return
+		}
+	}(zipFile)
+
+	write := zip.NewWriter(zipFile)
+	defer func(write *zip.Writer) {
+		err := write.Close()
+		if err != nil {
+			this.response.Error = err
+			return
+		}
+	}(write)
+
+	for _, file := range files {
+
+		item, err := os.Open(file)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+		defer func(item *os.File) {
+			err := item.Close()
+			if err != nil {
+				this.response.Error = err
+				return
+			}
+		}(item)
+
+		info, err := item.Stat()
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+
+		header.Name = file
+		header.Method = zip.Deflate
+
+		writer, err := write.CreateHeader(header)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+
+		_, err = io.Copy(writer, item)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+	}
+
+	this.response.Text = "1"
+	this.response.Result = true
+	this.response.Byte = []byte{1}
+
+	return this.response
+}
+
+// UnZip 解压文件
+/**
+ * @return *FileResponse
+ * @example：
+ * 1. item := utils.File().Dir("public").Name("name.zip").UnZip()
+ * 2. item := utils.File().Dir("public").Path("public/name.zip").UnZip()
+ * 3. item := utils.File(utils.FileRequest{
+		Path: "public/name.zip",
+		Dir: "public",
+	}).UnZip()
+*/
+func (this *FileStruct) UnZip() (result *FileResponse) {
+
+	if IsEmpty(this.request.Dir) {
+		this.response.Error = errors.New("解压路径不能为空")
+		return this.response
+	}
+
+	if IsEmpty(this.request.Path) && !IsEmpty(this.request.Name) {
+
+		// 判断 Dir 是否以 / 结尾
+		if this.request.Dir[len(this.request.Dir)-1:] != "/" {
+			this.request.Dir += "/"
+		}
+
+		// 判断 Name 是否以 .zip 结尾
+		if this.request.Name[len(this.request.Name)-4:] != ".zip" {
+			this.request.Name += ".zip"
+		}
+
+		this.request.Path = this.request.Dir + this.request.Name
+	}
+
+	if IsEmpty(this.request.Path) {
+		this.response.Error = errors.New("压缩包路径不能为空")
+		return this.response
+	}
+
+	// 判断压缩包是否存在
+	if _, err := os.Stat(this.request.Path); os.IsNotExist(err) {
+		this.response.Error = err
+		return this.response
+	}
+
+	// 读取压缩包
+	read, err := zip.OpenReader(this.request.Path)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+	defer func(read *zip.ReadCloser) {
+		err := read.Close()
+		if err != nil {
+			this.response.Error = err
+			return
+		}
+	}(read)
+
+	for _, file := range read.File {
+		item, err := file.Open()
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+		defer func(item io.ReadCloser) {
+			err := item.Close()
+			if err != nil {
+				this.response.Error = err
+				return
+			}
+		}(item)
+
+		Byte, err := io.ReadAll(item)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+
+		// 如果 this.request.Dir 不存在，则创建
+		if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
+			err := os.Mkdir(this.request.Dir, os.ModePerm)
+			if err != nil {
+				this.response.Error = err
+				return this.response
+			}
+		}
+
+		err = os.WriteFile(this.request.Dir+"/"+file.Name, Byte, 0644)
+		if err != nil {
+			this.response.Error = err
+			return this.response
+		}
+	}
+
+	this.response.Text = "1"
+	this.response.Result = true
+	this.response.Byte = []byte{1}
 
 	return this.response
 }
