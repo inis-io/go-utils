@@ -43,6 +43,7 @@ func init() {
 	Is.MapAny = IsMapAny
 	Get.Type = GetType
 	Get.Ip = GetIp
+	Get.Mac = GetMac
 	In.Array = InArray[any]
 	Array.Filter = ArrayFilter
 	Array.Remove = ArrayRemove
@@ -121,6 +122,7 @@ var Is struct {
 var Get struct {
 	Type       func(value any) (result string)
 	Ip         func(key ...string) (result any)
+	Mac        func() (result string)
 	Resolution func(index int) (size int)
 }
 

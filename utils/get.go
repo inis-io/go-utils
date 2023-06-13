@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/spf13/cast"
 	"net"
 	"strings"
 	"sync"
@@ -42,7 +43,7 @@ func GetIp(key ...string) (result any) {
 		wr.Data["intranet"] = localAddr[0:idx]
 		wr.Lock.Unlock()
 	}()
-	
+
 	go func() {
 		defer wg.Done()
 		// 外网IP - 替代品：https://api.ipify.org https://ipinfo.io/ip https://api.ip.sb/ip
@@ -62,4 +63,31 @@ func GetIp(key ...string) (result any) {
 	}
 
 	return wr.Data
+}
+
+// GetMac - 获取本机MAC
+func GetMac() (result string) {
+
+	interfaces, err := net.Interfaces()
+
+	if err != nil {
+		return ""
+	}
+
+	for _, item := range interfaces {
+		// 过滤掉非物理接口类型
+		if item.Flags&net.FlagUp != 0 && item.Flags&net.FlagLoopback == 0 && item.Flags&net.FlagPointToPoint == 0 {
+			if value, err := item.Addrs(); err == nil {
+				for _, val := range value {
+					if IPNet, ok := val.(*net.IPNet); ok && !IPNet.IP.IsLoopback() {
+						if mac := item.HardwareAddr; len(mac) > 0 {
+							return cast.ToString(mac)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ""
 }

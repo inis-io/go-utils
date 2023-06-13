@@ -24,6 +24,17 @@ func Ternary[T any](IF bool, TRUE T, FALSE T) T {
 	return FALSE
 }
 
+// Default - 设置默认值
+func Default[T any](param T, value ...T) (result T) {
+	if IsEmpty(param) {
+		if len(value) > 0 {
+			return value[0]
+		}
+		return result
+	}
+	return param
+}
+
 // Replace - 字符串替换
 func Replace(value any, params map[string]any) (result string) {
 	result = cast.ToString(value)
