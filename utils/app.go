@@ -72,6 +72,7 @@ func init() {
 	Mime.Type = MimeType
 	Map.WithField = MapWithField[map[string]any]
 	Map.WithoutField = MapWithoutField[map[string]any]
+	Map.ToURL = MapToURL
 	Version.Go = VersionGo
 	Version.Compare = VersionCompare
 	Unity.Ids = UnityIds
@@ -185,6 +186,7 @@ var Mime struct {
 var Map struct {
 	WithField    func(data map[string]any, field []string) (result map[string]any)
 	WithoutField func(data map[string]any, field []string) (result map[string]any)
+	ToURL        func(data map[string]any) (result string)
 }
 
 var Version struct {
