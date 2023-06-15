@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/spf13/cast"
@@ -195,13 +194,27 @@ func (this *CurlStruct) Send() *CurlResponse {
 		this.request.Url += "?" + query.Encode()
 	}
 
+	// 如果没有设置 Content-Type 则默认为 application/json
+	if _, ok := this.request.Headers["Content-Type"]; !ok {
+		this.request.Headers["Content-Type"] = "application/json"
+	}
+
 	// Create request object
 	var buffer []byte
 	contentType, ok := this.request.Headers["Content-Type"]
 	if ok {
 		switch {
 		case strings.Contains(cast.ToString(contentType), "application/json"):
-			buffer, _ = json.Marshal(this.request.Body)
+
+			// buffer, _ = json.Marshal(this.request.Body)
+
+			// 如果 this.request.Body 是 map 类型，则直接转换为 json
+			if IsMap(this.request.Body) {
+				buffer = []byte(JsonEncode(this.request.Body))
+			} else {
+				buffer = []byte(cast.ToString(this.request.Body))
+			}
+
 		case strings.Contains(cast.ToString(contentType), "application/x-www-form-urlencoded"):
 			form := url.Values{}
 			for key, val := range this.request.Data {
