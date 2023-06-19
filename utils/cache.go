@@ -7,12 +7,13 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
 
-type FileCacheStructItem struct {
+type FileCacheClientItem struct {
 	// 过期时间
 	expire int64
 	// 文件名
@@ -23,24 +24,24 @@ type FileCacheStructItem struct {
 	end time.Time
 }
 
-type FileCacheStruct struct {
+type FileCacheClient struct {
 	dir    string     // 缓存目录
 	mutex  sync.Mutex // 互斥锁，用于保证并发安全
 	prefix string     // 缓存文件名前缀
 	expire int64      // 默认缓存过期时间
-	items  map[string]*FileCacheStructItem
+	items  map[string]*FileCacheClientItem
 }
 
 // NewFileCache - 新建文件缓存
 /**
  * @param dir 缓存目录
  * @param prefix 缓存名前缀
- * @return *FileCacheStruct, error
+ * @return *FileCacheClient, error
  * @example：
- * 1. cache, err := facade.NewFileCacheStruct("runtime/cache")
- * 2. cache, err := facade.NewFileCacheStruct("runtime/cache", "cache_")
+ * 1. cache, err := facade.NewFileCacheClient("runtime/cache")
+ * 2. cache, err := facade.NewFileCacheClient("runtime/cache", "cache_")
  */
-func NewFileCache(dir any, expire any, prefix ...any) (*FileCacheStruct, error) {
+func NewFileCache(dir any, expire any, prefix ...any) (*FileCacheClient, error) {
 
 	err := os.MkdirAll(cast.ToString(dir), 0755)
 	if err != nil {
@@ -51,10 +52,10 @@ func NewFileCache(dir any, expire any, prefix ...any) (*FileCacheStruct, error) 
 		prefix = append(prefix, "cache_")
 	}
 
-	client := &FileCacheStruct{
+	client := &FileCacheClient{
 		dir:    cast.ToString(dir),
 		prefix: cast.ToString(prefix[0]),
-		items:  make(map[string]*FileCacheStructItem),
+		items:  make(map[string]*FileCacheClientItem),
 		expire: cast.ToInt64(expire),
 	}
 
@@ -65,7 +66,7 @@ func NewFileCache(dir any, expire any, prefix ...any) (*FileCacheStruct, error) 
 }
 
 // Get 从缓存中获取key对应的数据
-func (this *FileCacheStruct) Get(key any) (result []byte) {
+func (this *FileCacheClient) Get(key any) (result []byte) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -94,7 +95,7 @@ func (this *FileCacheStruct) Get(key any) (result []byte) {
 }
 
 // Has 检查缓存中是否存在key对应的数据
-func (this *FileCacheStruct) Has(key any) (exist bool) {
+func (this *FileCacheClient) Has(key any) (exist bool) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -118,7 +119,7 @@ func (this *FileCacheStruct) Has(key any) (exist bool) {
 }
 
 // Set 将key-value数据加入到缓存中
-func (this *FileCacheStruct) Set(key any, value []byte, expire ...any) (ok bool) {
+func (this *FileCacheClient) Set(key any, value []byte, expire ...any) (ok bool) {
 
 	exp := this.expire
 
@@ -134,31 +135,31 @@ func (this *FileCacheStruct) Set(key any, value []byte, expire ...any) (ok bool)
 }
 
 // Del 从缓存中删除key对应的数据
-func (this *FileCacheStruct) Del(key any) (ok bool) {
+func (this *FileCacheClient) Del(key any) (ok bool) {
 	err := this.DelE(key)
 	return Ternary(err != nil, false, true)
 }
 
 // DelPrefix 从缓存中删除指定前缀的数据
-func (this *FileCacheStruct) DelPrefix(prefix ...any) (ok bool) {
+func (this *FileCacheClient) DelPrefix(prefix ...any) (ok bool) {
 	err := this.DelPrefixE(prefix...)
 	return Ternary(err != nil, false, true)
 }
 
 // DelTags 从缓存中删除指定标签的数据
-func (this *FileCacheStruct) DelTags(tags ...any) (ok bool) {
+func (this *FileCacheClient) DelTags(tags ...any) (ok bool) {
 	err := this.DelTagsE(tags...)
 	return Ternary(err != nil, false, true)
 }
 
 // Clear 清空缓存
-func (this *FileCacheStruct) Clear() (ok bool) {
+func (this *FileCacheClient) Clear() (ok bool) {
 	err := this.ClearE()
 	return Ternary(err != nil, false, true)
 }
 
 // SetE 将key-value数据加入到缓存中
-func (this *FileCacheStruct) SetE(key any, value []byte, expire int64) (err error) {
+func (this *FileCacheClient) SetE(key any, value []byte, expire int64) (err error) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -195,7 +196,7 @@ func (this *FileCacheStruct) SetE(key any, value []byte, expire int64) (err erro
 		end = time.Now().Add(time.Duration(expire) * time.Second)
 	}
 
-	this.items[cast.ToString(key)] = &FileCacheStructItem{
+	this.items[cast.ToString(key)] = &FileCacheClientItem{
 		expire: expire,
 		name:   name,
 		start:  time.Now(),
@@ -206,7 +207,7 @@ func (this *FileCacheStruct) SetE(key any, value []byte, expire int64) (err erro
 }
 
 // DelE 从缓存中删除key对应的数据
-func (this *FileCacheStruct) DelE(key any) (err error) {
+func (this *FileCacheClient) DelE(key any) (err error) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -227,7 +228,7 @@ func (this *FileCacheStruct) DelE(key any) (err error) {
 }
 
 // GetKeys 获取所有缓存的key
-func (this *FileCacheStruct) GetKeys() (slice []string) {
+func (this *FileCacheClient) GetKeys() (slice []string) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
@@ -240,7 +241,7 @@ func (this *FileCacheStruct) GetKeys() (slice []string) {
 }
 
 // ClearE 清空缓存
-func (this *FileCacheStruct) ClearE() (err error) {
+func (this *FileCacheClient) ClearE() (err error) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -252,7 +253,7 @@ func (this *FileCacheStruct) ClearE() (err error) {
 		}
 	}
 
-	this.items = make(map[string]*FileCacheStructItem)
+	this.items = make(map[string]*FileCacheClientItem)
 
 	// 清空缓存目录
 	err = os.RemoveAll(this.dir)
@@ -264,7 +265,7 @@ func (this *FileCacheStruct) ClearE() (err error) {
 }
 
 // DelPrefixE 删除指定前缀的缓存
-func (this *FileCacheStruct) DelPrefixE(prefix ...any) (err error) {
+func (this *FileCacheClient) DelPrefixE(prefix ...any) (err error) {
 
 	var keys []string
 	var prefixes []string
@@ -307,7 +308,7 @@ func (this *FileCacheStruct) DelPrefixE(prefix ...any) (err error) {
 }
 
 // DelTagsE 删除指定标签的缓存
-func (this *FileCacheStruct) DelTagsE(tag ...any) (err error) {
+func (this *FileCacheClient) DelTagsE(tag ...any) (err error) {
 
 	var keys []string
 	var tags []string
@@ -361,7 +362,7 @@ func (this *FileCacheStruct) DelTagsE(tag ...any) (err error) {
 }
 
 // GetInfo 获取缓存信息
-func (this *FileCacheStruct) GetInfo(key any) (info map[string]any) {
+func (this *FileCacheClient) GetInfo(key any) (info map[string]any) {
 
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
@@ -394,7 +395,7 @@ func (this *FileCacheStruct) GetInfo(key any) (info map[string]any) {
 // keys := []string{"cache_test1","cache_test2","cache_inis_test1","cache_inis_test2","cache_admin_name","cache_unti_name"}
 // tags := []string{"*inis*test*", "*unti*", "*admin*"}
 // return []string{"cache_inis_test1","cache_inis_test2","cache_admin_name","cache_unti_name"}
-func (this *FileCacheStruct) fuzzyMatch(keys []string, tags []string) (result []string) {
+func (this *FileCacheClient) fuzzyMatch(keys []string, tags []string) (result []string) {
 	for _, item := range keys {
 		for _, tag := range tags {
 			if matched, _ := filepath.Match(tag, item); matched {
@@ -407,12 +408,16 @@ func (this *FileCacheStruct) fuzzyMatch(keys []string, tags []string) (result []
 }
 
 // name 返回缓存文件名
-func (this *FileCacheStruct) name(key any) (result string) {
-	return path.Join(this.dir, fmt.Sprintf("%s%s", this.prefix, cast.ToString(key)))
+func (this *FileCacheClient) name(key any) (result string) {
+
+	// 过滤掉 windows、linux和mac下的非法字符
+	key = regexp.MustCompile(`[\\/:*?"<>|]`).ReplaceAllString(cast.ToString(fmt.Sprintf("%s%s", this.prefix, key)), "")
+
+	return path.Join(this.dir, cast.ToString(key))
 }
 
 // timer 定时器 - 每隔一段时间清理过期的缓存文件
-func (this *FileCacheStruct) timer() {
+func (this *FileCacheClient) timer() {
 	for {
 
 		time.Sleep(1 * time.Second)
