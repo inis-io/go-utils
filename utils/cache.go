@@ -125,7 +125,13 @@ func (this *FileCacheClient) Set(key any, value []byte, expire ...any) (ok bool)
 
 	if len(expire) > 0 {
 		if !IsEmpty(expire[0]) {
-			exp = cast.ToInt64(expire[0])
+			// 判断 expire[0] 是否为Duration类型
+			if reflect.TypeOf(expire[0]).String() == "time.Duration" {
+				// 转换为int64
+				exp = cast.ToInt64(cast.ToDuration(expire[0]).Seconds())
+			} else {
+				exp = cast.ToInt64(expire[0])
+			}
 		}
 	}
 
