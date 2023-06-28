@@ -124,7 +124,6 @@ var Get struct {
 	Type       func(value any) (result string)
 	Ip         func(key ...string) (result any)
 	Mac        func() (result string)
-	Resolution func(index int) (size int)
 }
 
 var In struct {
