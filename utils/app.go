@@ -68,6 +68,7 @@ func init() {
 	Format.Query = FormatQuery
 	Parse.ParamsBefore = ParseParamsBefore
 	Parse.Params = ParseParams
+	Parse.Domain = ParseDomain
 	Net.Tcping = NetTcping
 	Mime.Type = MimeType
 	Map.WithField = MapWithField[map[string]any]
@@ -172,6 +173,7 @@ var Format struct {
 var Parse struct {
 	ParamsBefore func(params url.Values) (result map[string]any)
 	Params       func(params map[string]any) (result map[string]any)
+	Domain 	 	 func(value any) (domain string)
 }
 
 var Net struct {

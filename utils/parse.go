@@ -167,3 +167,12 @@ func ParseParams(params map[string]any) (result map[string]any) {
 
 	return wr.Data
 }
+
+// ParseDomain - 解析域名
+func ParseDomain(value any) (domain string) {
+	URL, err := url.Parse(cast.ToString(value))
+	if err != nil {
+		return ""
+	}
+	return URL.Hostname()
+}
