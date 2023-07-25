@@ -791,39 +791,45 @@ func (this *FileStruct) UnZip() (result *FileResponse) {
 	}(read)
 
 	for _, file := range read.File {
-		item, err := file.Open()
+		// 解压文件
+		err := this.extract(file, this.request.Dir)
 		if err != nil {
 			this.response.Error = err
 			return this.response
 		}
-		defer func(item io.ReadCloser) {
-			err := item.Close()
-			if err != nil {
-				this.response.Error = err
-				return
-			}
-		}(item)
-
-		Byte, err := io.ReadAll(item)
-		if err != nil {
-			this.response.Error = err
-			return this.response
-		}
-
-		// 如果 this.request.Dir 不存在，则创建
-		if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
-			err := os.Mkdir(this.request.Dir, os.ModePerm)
-			if err != nil {
-				this.response.Error = err
-				return this.response
-			}
-		}
-
-		err = os.WriteFile(this.request.Dir+"/"+file.Name, Byte, 0644)
-		if err != nil {
-			this.response.Error = err
-			return this.response
-		}
+		// item, err := file.Open()
+		// if err != nil {
+		// 	this.response.Error = err
+		// 	return this.response
+		// }
+		// defer func(item io.ReadCloser) {
+		// 	err := item.Close()
+		// 	if err != nil {
+		// 		this.response.Error = err
+		// 		return
+		// 	}
+		// }(item)
+		//
+		// Byte, err := io.ReadAll(item)
+		// if err != nil {
+		// 	this.response.Error = err
+		// 	return this.response
+		// }
+		//
+		// // 如果 this.request.Dir 不存在，则创建
+		// if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
+		// 	err := os.Mkdir(this.request.Dir, os.ModePerm)
+		// 	if err != nil {
+		// 		this.response.Error = err
+		// 		return this.response
+		// 	}
+		// }
+		//
+		// err = os.WriteFile(this.request.Dir+"/"+file.Name, Byte, 0644)
+		// if err != nil {
+		// 	this.response.Error = err
+		// 	return this.response
+		// }
 	}
 
 	this.response.Text = "1"
@@ -831,4 +837,54 @@ func (this *FileStruct) UnZip() (result *FileResponse) {
 	this.response.Byte = []byte{1}
 
 	return this.response
+}
+
+// 提取文件
+func (this *FileStruct) extract(file *zip.File, dir string) (err error) {
+
+	read, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer func(read io.ReadCloser) {
+		err := read.Close()
+		if err != nil {
+
+		}
+	}(read)
+
+	path := filepath.Join(dir, file.Name)
+
+	if file.FileInfo().IsDir() {
+
+		err := os.MkdirAll(path, file.Mode())
+		if err != nil {
+			return err
+		}
+
+	} else {
+
+		err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
+		if err != nil {
+			return err
+		}
+		item, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+
+		if err != nil {
+			return err
+		}
+		defer func(item *os.File) {
+			err := item.Close()
+			if err != nil {
+				return
+			}
+		}(item)
+
+		_, err = io.Copy(item, read)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
