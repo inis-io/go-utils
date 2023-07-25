@@ -180,7 +180,7 @@ func (this *FileStruct) Save(reader io.Reader, path ...string) (result *FileResp
 	return this.response
 }
 
-// Remove 删除文件
+// Remove 删除文件或目录
 func (this *FileStruct) Remove(path ...any) (result *FileResponse) {
 
 	if len(path) != 0 {
@@ -192,8 +192,22 @@ func (this *FileStruct) Remove(path ...any) (result *FileResponse) {
 		return this.response
 	}
 
-	// 删除文件
-	err := os.Remove(this.request.Path)
+	var err error
+
+	fileInfo, err := os.Stat(this.request.Path)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	if fileInfo.IsDir() {
+		// 删除目录
+		err = os.RemoveAll(this.request.Path)
+	} else {
+		// 删除文件
+		err = os.Remove(this.request.Path)
+	}
+
 	if err != nil {
 		this.response.Error = err
 		return this.response
