@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cast"
 	"net"
+	"os"
 	"strings"
 	"sync"
 )
@@ -90,4 +91,13 @@ func GetMac() (result string) {
 	}
 
 	return ""
+}
+
+// GetPid - 获取进程ID
+func GetPid() (result int) {
+	process, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return 0
+	}
+	return process.Pid
 }

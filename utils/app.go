@@ -44,6 +44,7 @@ func init() {
 	Get.Type = GetType
 	Get.Ip = GetIp
 	Get.Mac = GetMac
+	Get.Pid = GetPid
 	In.Array = InArray[any]
 	Array.Filter = ArrayFilter
 	Array.Remove = ArrayRemove
@@ -122,9 +123,10 @@ var Is struct {
 }
 
 var Get struct {
-	Type       func(value any) (result string)
-	Ip         func(key ...string) (result any)
-	Mac        func() (result string)
+	Type func(value any) (result string)
+	Ip   func(key ...string) (result any)
+	Mac  func() (result string)
+	Pid  func() (result int)
 }
 
 var In struct {
@@ -173,7 +175,7 @@ var Format struct {
 var Parse struct {
 	ParamsBefore func(params url.Values) (result map[string]any)
 	Params       func(params map[string]any) (result map[string]any)
-	Domain 	 	 func(value any) (domain string)
+	Domain       func(value any) (domain string)
 }
 
 var Net struct {
