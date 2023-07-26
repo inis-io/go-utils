@@ -45,6 +45,7 @@ func init() {
 	Get.Ip = GetIp
 	Get.Mac = GetMac
 	Get.Pid = GetPid
+	Get.Pwd = GetPwd
 	In.Array = InArray[any]
 	Array.Filter = ArrayFilter
 	Array.Remove = ArrayRemove
@@ -127,6 +128,7 @@ var Get struct {
 	Ip   func(key ...string) (result any)
 	Mac  func() (result string)
 	Pid  func() (result int)
+	Pwd  func() (result string)
 }
 
 var In struct {

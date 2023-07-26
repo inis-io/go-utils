@@ -101,3 +101,12 @@ func GetPid() (result int) {
 	}
 	return process.Pid
 }
+
+// GetPwd - 获取当前目录
+func GetPwd() (result string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return dir
+}
