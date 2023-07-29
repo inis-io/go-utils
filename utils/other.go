@@ -68,12 +68,33 @@ func typeof(args ...any) (typeof string, empty bool) {
 		case "slice":
 			typeof = "slice"
 			s := reflect.ValueOf(item)
+			// 遍历所有元素
+			for i := 0; i < s.Len(); i++ {
+				elem := reflect.ValueOf(s.Index(i).Interface())
+				if elem.Kind() == reflect.Map {
+					typeof = "2d slice"
+					break
+				}
+			}
 			if s.Len() == 0 {
 				empty = true
 			}
+			// typeof = "slice"
+			// s := reflect.ValueOf(item)
+			// if s.Len() == 0 {
+			// 	empty = true
+			// }
 		case "array":
 			typeof = "array"
 			s := reflect.ValueOf(item)
+			// 遍历所有元素
+			for i := 0; i < s.Len(); i++ {
+				elem := reflect.ValueOf(s.Index(i).Interface())
+				if elem.Kind() == reflect.Map {
+					typeof = "2d array"
+					break
+				}
+			}
 			if s.Len() == 0 {
 				empty = true
 			}
