@@ -72,3 +72,19 @@ func MapToURL(params map[string]any) (result string) {
 
 	return strings.TrimPrefix(result, "?")
 }
+
+// MapKeys - 获取 map 的所有 key
+func MapKeys[T map[string]any](data T) (result []string) {
+	for key := range data {
+		result = append(result, key)
+	}
+	return
+}
+
+// MapValues - 获取 map 的所有 value
+func MapValues[T map[string]any](data T) (result []any) {
+	for _, val := range data {
+		result = append(result, val)
+	}
+	return
+}

@@ -76,6 +76,8 @@ func init() {
 	Map.WithField = MapWithField[map[string]any]
 	Map.WithoutField = MapWithoutField[map[string]any]
 	Map.ToURL = MapToURL
+	Map.Keys = MapKeys[map[string]any]
+	Map.Values = MapValues[map[string]any]
 	Version.Go = VersionGo
 	Version.Compare = VersionCompare
 	Unity.Ids = UnityIds
@@ -192,6 +194,8 @@ var Map struct {
 	WithField    func(data map[string]any, field []string) (result map[string]any)
 	WithoutField func(data map[string]any, field []string) (result map[string]any)
 	ToURL        func(data map[string]any) (result string)
+	Keys         func(data map[string]any) (result []string)
+	Values       func(data map[string]any) (result []any)
 }
 
 var Version struct {
