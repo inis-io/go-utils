@@ -4,6 +4,7 @@ import (
 	"fmt"
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
+	"sort"
 	"strings"
 )
 
@@ -41,4 +42,36 @@ func JsonGet(jsonString any, key any) (result any, err error) {
 	}
 
 	return result, nil
+}
+
+// JsonString map转json字符串
+func JsonString(data any) (result string) {
+
+	item := cast.ToStringMap(data)
+
+	// 将map的key排序
+	keys := make([]string, 0, len(item))
+	for key := range item {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	// 构建有序的map
+	order := make(map[string]any)
+	for _, key := range keys {
+		order[key] = item[key]
+	}
+
+	// 转换为JSON字符串
+	bytes, err := json.Marshal(order)
+	if err != nil {
+		return ""
+	}
+
+	// 判断是否为空
+	if string(bytes) == "{}" {
+		return ""
+	}
+
+	return string(bytes)
 }

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/spf13/cast"
 	"strings"
 )
 
@@ -49,5 +50,23 @@ func ArrayEmpty[T any](array []T) (slice []any) {
 			slice = append(slice, item)
 		}
 	}
+	return slice
+}
+
+// ArrayMapWithField - 数组Map保留指定字段
+func ArrayMapWithField(array []map[string]any, field any) (slice []any) {
+
+	// 获取字段
+	keys := cast.ToStringSlice(Unity.Keys(field))
+
+	if IsEmpty(keys) {
+		return cast.ToSlice(array)
+	}
+
+	for _, item := range array {
+		val := Map.WithField(cast.ToStringMap(item), keys)
+		slice = append(cast.ToSlice(slice), val)
+	}
+
 	return slice
 }

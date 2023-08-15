@@ -51,6 +51,7 @@ func init() {
 	Array.Remove = ArrayRemove
 	Array.Unique = ArrayUnique[any]
 	Array.Empty = ArrayEmpty[any]
+	Array.MapWithField = ArrayMapWithField
 	Password.Create = PasswordCreate
 	Password.Verify = PasswordVerify
 	Rand.Int = RandInt
@@ -67,6 +68,7 @@ func init() {
 	Json.Encode = JsonEncode
 	Json.Decode = JsonDecode
 	Json.Get = JsonGet
+	Json.String = JsonString
 	Format.Query = FormatQuery
 	Parse.ParamsBefore = ParseParamsBefore
 	Parse.Params = ParseParams
@@ -138,10 +140,11 @@ var In struct {
 }
 
 var Array struct {
-	Filter func(array []string) (slice []string)
-	Remove func(array []string, args ...string) (slice []string)
-	Unique func(array []any) (slice []any)
-	Empty  func(array []any) (slice []any)
+	Filter       func(array []string) (slice []string)
+	Remove       func(array []string, args ...string) (slice []string)
+	Unique       func(array []any) (slice []any)
+	Empty        func(array []any) (slice []any)
+	MapWithField func(array []map[string]any, field any) (slice []any)
 }
 
 var Password struct {
@@ -170,6 +173,7 @@ var Json struct {
 	Encode func(value any) (result string)
 	Decode func(value any) (result any)
 	Get    func(value any, key any) (result any, err error)
+	String func(value any) (result string)
 }
 
 var Format struct {
