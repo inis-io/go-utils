@@ -45,11 +45,21 @@ func RandInt(max int, min ...int) (result int) {
 // RandSlice - 返回随机的指定长度的切片
 func RandSlice(slice []any, limit any) (result []any) {
 
+	// 如果切片为空，直接返回
+	if len(slice) == 0 {
+		return slice
+	}
+
 	// 设置随机数种子
 	rand.NewSource(time.Now().UnixNano())
 
 	// 创建一个map用于存储选中的元素
 	selected := make(map[any]bool)
+
+	// 限制最大长度
+	if cast.ToInt(limit) > len(slice) {
+		limit = len(slice)
+	}
 
 	// 随机选择指定数量的不重复元素
 	for len(selected) < cast.ToInt(limit) {
@@ -63,4 +73,23 @@ func RandSlice(slice []any, limit any) (result []any) {
 	}
 
 	return result
+}
+
+// RandMapSlice - 打乱切片顺序
+func RandMapSlice(slice []map[string]any) (result []map[string]any) {
+
+	// 如果切片为空，直接返回
+	if len(slice) == 0 {
+		return slice
+	}
+
+	// 设置随机数种子
+	rand.NewSource(time.Now().UnixNano())
+
+	// 打乱切片顺序
+	rand.Shuffle(len(slice), func(i, j int) {
+		slice[i], slice[j] = slice[j], slice[i]
+	})
+
+	return slice
 }

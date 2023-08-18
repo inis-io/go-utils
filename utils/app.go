@@ -57,6 +57,7 @@ func init() {
 	Rand.Int = RandInt
 	Rand.String = RandString
 	Rand.Slice = RandSlice
+	Rand.MapSlice = RandMapSlice
 	Struct.Set = StructSet
 	Struct.Get = StructGet
 	Struct.Del = StructDel
@@ -154,9 +155,10 @@ var Password struct {
 }
 
 var Rand struct {
-	Int    func(max int, min ...int) (result int)
-	String func(length int, chars ...string) (result string)
-	Slice  func(slice []any, limit any) (result []any)
+	Int      func(max int, min ...int) (result int)
+	String   func(length int, chars ...string) (result string)
+	Slice    func(slice []any, limit any) (result []any)
+	MapSlice func(slice []map[string]any) (result []map[string]any)
 }
 
 var Struct struct {
