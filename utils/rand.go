@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/spf13/cast"
 	"math/rand"
 	"time"
 )
@@ -37,6 +38,29 @@ func RandInt(max int, min ...int) (result int) {
 	if max == min[0] {
 		return max
 	}
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 	return rand.Intn(max-min[0]) + min[0]
+}
+
+// RandSlice - 返回随机的指定长度的切片
+func RandSlice(slice []any, limit any) (result []any) {
+
+	// 设置随机数种子
+	rand.NewSource(time.Now().UnixNano())
+
+	// 创建一个map用于存储选中的元素
+	selected := make(map[any]bool)
+
+	// 随机选择指定数量的不重复元素
+	for len(selected) < cast.ToInt(limit) {
+		index := rand.Intn(len(slice))
+		selected[slice[index]] = true
+	}
+
+	// 将选中的元素存储到切片中
+	for key := range selected {
+		result = append(result, key)
+	}
+
+	return result
 }

@@ -56,6 +56,7 @@ func init() {
 	Password.Verify = PasswordVerify
 	Rand.Int = RandInt
 	Rand.String = RandString
+	Rand.Slice = RandSlice
 	Struct.Set = StructSet
 	Struct.Get = StructGet
 	Struct.Del = StructDel
@@ -155,6 +156,7 @@ var Password struct {
 var Rand struct {
 	Int    func(max int, min ...int) (result int)
 	String func(length int, chars ...string) (result string)
+	Slice  func(slice []any, limit any) (result []any)
 }
 
 var Struct struct {
