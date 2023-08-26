@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"github.com/spf13/cast"
 	"hash/fnv"
+	rand2 "math/rand"
+	"time"
 )
 
 type HashStruct struct{}
@@ -69,6 +71,25 @@ func (this *HashStruct) Token(value any, args ...any) (result string) {
 	}
 
 	return item
+}
+
+// Number 生成指定长度的随机数
+/**
+ * @param length 长度
+ * @return result 随机数
+ * @example：
+ * 1. number := facade.Hash.Number(6)
+ */
+func (this *HashStruct) Number(length any) (result string) {
+
+	// 生成一个随机种子
+	rand2.NewSource(time.Now().UnixNano())
+	// 生成一个随机数
+	for i := 0; i < cast.ToInt(length); i++ {
+		result += fmt.Sprintf("%d", rand2.Intn(10))
+	}
+
+	return result
 }
 
 // AESRequest - 请求输入
