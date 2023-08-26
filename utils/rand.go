@@ -1,13 +1,50 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/spf13/cast"
 	"math/rand"
 	"time"
 )
 
-// RandString - 生成随机字符串
-func RandString(length int, chars ...string) (result string) {
+// Rand - 随机数
+var Rand *RandStruct
+
+type RandStruct struct{}
+
+// Number - 生成指定长度的随机数
+func (this *RandStruct) Number(length any) (result string) {
+
+	mac := Hash.Sum32(Get.Mac())
+	pid := Get.Pid()
+	nano := time.Now().UnixNano()
+
+	// 生成一个随机种子
+	seed := fmt.Sprintf("%v%d%d", mac, pid, nano)
+
+	// 如果 种子 超过了 int64 的最大值
+	if len(seed) > 19 {
+		// 压缩种子
+		seed = Hash.Sum32(seed)
+	}
+
+	// 种子长度不足 int64 的最大值，补足
+	if len(seed) < 19 {
+		seed = seed + Hash.Number(19-len(seed))
+	}
+
+	rand.NewSource(cast.ToInt64(seed))
+
+	// 生成指定长度的随机数
+	for i := 0; i < cast.ToInt(length); i++ {
+		result += fmt.Sprintf("%d", rand.Intn(10))
+	}
+
+	return result
+}
+
+// String - 生成随机字符串
+func (this *RandStruct) String(length any, chars ...string) (result string) {
 
 	var charset string
 
@@ -18,7 +55,7 @@ func RandString(length int, chars ...string) (result string) {
 	}
 	var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	item := make([]byte, length)
+	item := make([]byte, cast.ToInt(length))
 	for i := range item {
 		item[i] = charset[seededRand.Intn(len(charset))]
 	}
@@ -26,24 +63,24 @@ func RandString(length int, chars ...string) (result string) {
 	return string(item)
 }
 
-// RandInt - 生成随机整数
-func RandInt(max int, min ...int) (result int) {
+// Int - 生成随机整数
+func (this *RandStruct) Int(max any, min ...any) (result int) {
 	if IsEmpty(min) {
-		min = []int{0}
+		min = []any{0}
 	}
-	if max <= min[0] {
+	if cast.ToInt(max) <= cast.ToInt(min[0]) {
 		// 交换两个数
-		max, min[0] = min[0], max
+		max, min[0] = min[0], cast.ToInt(max)
 	}
 	if max == min[0] {
-		return max
+		return cast.ToInt(max)
 	}
 	rand.NewSource(time.Now().UnixNano())
-	return rand.Intn(max-min[0]) + min[0]
+	return rand.Intn(cast.ToInt(max)-cast.ToInt(min[0])) + cast.ToInt(min[0])
 }
 
-// RandSlice - 返回随机的指定长度的切片
-func RandSlice(slice []any, limit any) (result []any) {
+// Slice - 返回随机的指定长度的切片
+func (this *RandStruct) Slice(slice []any, limit any) (result []any) {
 
 	// 如果切片为空，直接返回
 	if len(slice) == 0 {
@@ -75,8 +112,8 @@ func RandSlice(slice []any, limit any) (result []any) {
 	return result
 }
 
-// RandMapSlice - 打乱切片顺序
-func RandMapSlice(slice []map[string]any) (result []map[string]any) {
+// MapSlice - 打乱切片顺序
+func (this *RandStruct) MapSlice(slice []map[string]any) (result []map[string]any) {
 
 	// 如果切片为空，直接返回
 	if len(slice) == 0 {

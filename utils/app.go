@@ -54,10 +54,6 @@ func init() {
 	Array.MapWithField = ArrayMapWithField
 	Password.Create = PasswordCreate
 	Password.Verify = PasswordVerify
-	Rand.Int = RandInt
-	Rand.String = RandString
-	Rand.Slice = RandSlice
-	Rand.MapSlice = RandMapSlice
 	Struct.Set = StructSet
 	Struct.Get = StructGet
 	Struct.Del = StructDel
@@ -152,13 +148,6 @@ var Array struct {
 var Password struct {
 	Create func(password any) (result string)
 	Verify func(encode any, password any) (ok bool)
-}
-
-var Rand struct {
-	Int      func(max int, min ...int) (result int)
-	String   func(length int, chars ...string) (result string)
-	Slice    func(slice []any, limit any) (result []any)
-	MapSlice func(slice []map[string]any) (result []map[string]any)
 }
 
 var Struct struct {
