@@ -48,7 +48,7 @@ func (this *RandStruct) String(length any, chars ...string) (result string) {
 
 	var charset string
 
-	if IsEmpty(chars) {
+	if Is.Empty(chars) {
 		charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	} else {
 		charset = chars[0]
@@ -65,7 +65,7 @@ func (this *RandStruct) String(length any, chars ...string) (result string) {
 
 // Int - 生成随机整数
 func (this *RandStruct) Int(max any, min ...any) (result int) {
-	if IsEmpty(min) {
+	if Is.Empty(min) {
 		min = []any{0}
 	}
 	if cast.ToInt(max) <= cast.ToInt(min[0]) {

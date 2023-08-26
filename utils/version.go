@@ -8,20 +8,25 @@ import (
 	"strings"
 )
 
-// VersionGo - 获取当前go版本号
-func VersionGo() (result string) {
+// Version - 版本
+var Version *VersionStruct
+
+type VersionStruct struct{}
+
+// Go - 获取当前go版本号
+func (this *VersionStruct) Go() (result string) {
 	return strings.Replace(runtime.Version(), "go", "", -1)
 }
 
-// VersionCompare - 版本号比对
+// Compare - 版本号比对
 /**
  * @param v1 string - 小版本号
  * @param v2 string - 大版本号
  * @return int - 0: 相等，1: v1 < v2，-1: v1 > v2
  * @example：
- * 	utils.VersionCompare("1.2.0", "1.0.0") // 1
+ * 	utils.Version.Compare("1.2.0", "1.0.0") // 1
  */
-func VersionCompare(v1, v2 any) (result int) {
+func (this *VersionStruct) Compare(v1, v2 any) (result int) {
 
 	rule := regexp.MustCompile(`\d+`)
 	v1Arr := rule.FindAllString(cast.ToString(v1), -1)

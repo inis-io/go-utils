@@ -124,7 +124,7 @@ func (this *FileCacheClient) Set(key any, value []byte, expire ...any) (ok bool)
 	exp := this.expire
 
 	if len(expire) > 0 {
-		if !IsEmpty(expire[0]) {
+		if !Is.Empty(expire[0]) {
 			// 判断 expire[0] 是否为Duration类型
 			if reflect.TypeOf(expire[0]).String() == "time.Duration" {
 				// 转换为int64

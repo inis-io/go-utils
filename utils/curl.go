@@ -48,23 +48,23 @@ func Curl(request ...CurlRequest) *CurlStruct {
 		request = append(request, CurlRequest{})
 	}
 
-	if IsEmpty(request[0].Method) {
+	if Is.Empty(request[0].Method) {
 		request[0].Method = "GET"
 	}
 
-	if IsEmpty(request[0].Data) {
+	if Is.Empty(request[0].Data) {
 		request[0].Data = make(map[string]any)
 	}
 
-	if IsEmpty(request[0].Query) {
+	if Is.Empty(request[0].Query) {
 		request[0].Query = make(map[string]any)
 	}
 
-	if IsEmpty(request[0].Headers) {
+	if Is.Empty(request[0].Headers) {
 		request[0].Headers = make(map[string]any)
 	}
 
-	if IsEmpty(request[0].Client) {
+	if Is.Empty(request[0].Client) {
 		request[0].Client = &http.Client{}
 	}
 
@@ -180,7 +180,7 @@ func (this *CurlStruct) Client(client *http.Client) *CurlStruct {
 // Send - 发起请求
 func (this *CurlStruct) Send() *CurlResponse {
 
-	if IsEmpty(this.request.Url) {
+	if Is.Empty(this.request.Url) {
 		this.response.Error = errors.New("url is required")
 		return this.response
 	}
@@ -209,8 +209,8 @@ func (this *CurlStruct) Send() *CurlResponse {
 			// buffer, _ = json.Marshal(this.request.Body)
 
 			// 如果 this.request.Body 是 map 类型，则直接转换为 json
-			if IsMap(this.request.Body) {
-				buffer = []byte(JsonEncode(this.request.Body))
+			if Is.Map(this.request.Body) {
+				buffer = []byte(Json.Encode(this.request.Body))
 			} else {
 				buffer = []byte(cast.ToString(this.request.Body))
 			}
@@ -305,7 +305,7 @@ func (this *CurlStruct) Send() *CurlResponse {
 	this.response.Text = string(body)
 	this.response.Headers = &response.Header
 	this.response.Request = response.Request
-	this.response.Json = cast.ToStringMap(JsonDecode(string(body)))
+	this.response.Json = cast.ToStringMap(Json.Decode(string(body)))
 	this.response.StatusCode = response.StatusCode
 
 	return this.response

@@ -59,23 +59,23 @@ func File(request ...FileRequest) *FileStruct {
 		request = append(request, FileRequest{})
 	}
 
-	if IsEmpty(request[0].Limit) {
+	if Is.Empty(request[0].Limit) {
 		request[0].Limit = 10
 	}
 
-	if IsEmpty(request[0].Page) {
+	if Is.Empty(request[0].Page) {
 		request[0].Page = 1
 	}
 
-	if IsEmpty(request[0].Format) {
+	if Is.Empty(request[0].Format) {
 		request[0].Format = "network"
 	}
 
-	if IsEmpty(request[0].Sub) {
+	if Is.Empty(request[0].Sub) {
 		request[0].Sub = true
 	}
 
-	if IsEmpty(request[0].Ext) {
+	if Is.Empty(request[0].Ext) {
 		request[0].Ext = "*"
 	}
 
@@ -140,7 +140,7 @@ func (this *FileStruct) Save(reader io.Reader, path ...string) (result *FileResp
 		this.request.Path = path[0]
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("文件路径不能为空")
 		return this.response
 	}
@@ -187,7 +187,7 @@ func (this *FileStruct) Remove(path ...any) (result *FileResponse) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("文件路径不能为空")
 		return this.response
 	}
@@ -236,7 +236,7 @@ func (this *FileStruct) Download(path ...any) (result *FileResponse) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("文件路径不能为空")
 		return this.response
 	}
@@ -256,7 +256,7 @@ func (this *FileStruct) Download(path ...any) (result *FileResponse) {
 	}
 	defer resp.Body.Close()
 
-	if IsEmpty(this.request.Name) {
+	if Is.Empty(this.request.Name) {
 		this.request.Name = filepath.Base(this.request.Path)
 	}
 
@@ -299,7 +299,7 @@ func (this *FileStruct) Byte(path ...any) (result *FileResponse) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("文件路径不能为空")
 		return this.response
 	}
@@ -368,7 +368,7 @@ func (this *FileStruct) List(path ...any) (result *FileResponse) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Dir) {
+	if Is.Empty(this.request.Dir) {
 		this.response.Error = errors.New("目录路径不能为空")
 		return this.response
 	}
@@ -388,7 +388,7 @@ func (this *FileStruct) List(path ...any) (result *FileResponse) {
 		// this.request.Ext 逗号分隔的字符串 转 []string
 		for _, val := range strings.Split(this.request.Ext, ",") {
 			// 忽略空字符串
-			if IsEmpty(val) {
+			if Is.Empty(val) {
 				continue
 			}
 			// 去除空格
@@ -406,7 +406,7 @@ func (this *FileStruct) List(path ...any) (result *FileResponse) {
 	if this.request.Format == "network" {
 		for key, val := range slice {
 			slice[key] = filepath.ToSlash(val)
-			if !IsEmpty(this.request.Domain) {
+			if !Is.Empty(this.request.Domain) {
 				slice[key] = this.request.Domain + slice[key][len(this.request.Prefix):]
 			}
 		}
@@ -429,7 +429,7 @@ func (this *FileStruct) Exist(path ...any) (ok bool) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		return false
 	}
 
@@ -448,7 +448,7 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 		this.request.Path = cast.ToString(path[0])
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("文件路径不能为空")
 		return this.response
 	}
@@ -529,7 +529,7 @@ func (this *FileStruct) Line(path ...any) (result *FileResponse) {
 	wg.Wait()
 
 	this.response.Result = lines
-	this.response.Text = JsonEncode(this.response.Result)
+	this.response.Text = Json.Encode(this.response.Result)
 	this.response.Byte = []byte(this.response.Text)
 
 	for _, v := range lines {
@@ -546,7 +546,7 @@ func (this *FileStruct) DirInfo(dir ...any) (result *FileResponse) {
 		this.request.Dir = cast.ToString(dir[0])
 	}
 
-	if IsEmpty(this.request.Dir) {
+	if Is.Empty(this.request.Dir) {
 		this.request.Dir = "./"
 	}
 
@@ -597,7 +597,7 @@ func (this *FileStruct) DirInfo(dir ...any) (result *FileResponse) {
 		"dirs":  dirs,
 		"files": files,
 	}
-	this.response.Text = JsonEncode(this.response.Result)
+	this.response.Text = Json.Encode(this.response.Result)
 	this.response.Byte = []byte(this.response.Text)
 
 	return this.response
@@ -616,12 +616,12 @@ func (this *FileStruct) DirInfo(dir ...any) (result *FileResponse) {
 */
 func (this *FileStruct) EnZip() (result *FileResponse) {
 
-	if IsEmpty(this.request.Dir) {
+	if Is.Empty(this.request.Dir) {
 		this.response.Error = errors.New("压缩目录不能为空")
 		return this.response
 	}
 
-	if IsEmpty(this.request.Path) && !IsEmpty(this.request.Name) {
+	if Is.Empty(this.request.Path) && !Is.Empty(this.request.Name) {
 
 		// 判断 Dir 是否以 / 结尾
 		if this.request.Dir[len(this.request.Dir)-1:] != "/" {
@@ -636,7 +636,7 @@ func (this *FileStruct) EnZip() (result *FileResponse) {
 		this.request.Path = this.request.Dir + this.request.Name
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("压缩后的文件路径不能为空")
 		return this.response
 	}
@@ -745,12 +745,12 @@ func (this *FileStruct) EnZip() (result *FileResponse) {
 */
 func (this *FileStruct) UnZip() (result *FileResponse) {
 
-	if IsEmpty(this.request.Dir) {
+	if Is.Empty(this.request.Dir) {
 		this.response.Error = errors.New("解压路径不能为空")
 		return this.response
 	}
 
-	if IsEmpty(this.request.Path) && !IsEmpty(this.request.Name) {
+	if Is.Empty(this.request.Path) && !Is.Empty(this.request.Name) {
 
 		// 判断 Dir 是否以 / 结尾
 		if this.request.Dir[len(this.request.Dir)-1:] != "/" {
@@ -765,7 +765,7 @@ func (this *FileStruct) UnZip() (result *FileResponse) {
 		this.request.Path = this.request.Dir + this.request.Name
 	}
 
-	if IsEmpty(this.request.Path) {
+	if Is.Empty(this.request.Path) {
 		this.response.Error = errors.New("压缩包路径不能为空")
 		return this.response
 	}
@@ -797,39 +797,6 @@ func (this *FileStruct) UnZip() (result *FileResponse) {
 			this.response.Error = err
 			return this.response
 		}
-		// item, err := file.Open()
-		// if err != nil {
-		// 	this.response.Error = err
-		// 	return this.response
-		// }
-		// defer func(item io.ReadCloser) {
-		// 	err := item.Close()
-		// 	if err != nil {
-		// 		this.response.Error = err
-		// 		return
-		// 	}
-		// }(item)
-		//
-		// Byte, err := io.ReadAll(item)
-		// if err != nil {
-		// 	this.response.Error = err
-		// 	return this.response
-		// }
-		//
-		// // 如果 this.request.Dir 不存在，则创建
-		// if _, err := os.Stat(this.request.Dir); os.IsNotExist(err) {
-		// 	err := os.Mkdir(this.request.Dir, os.ModePerm)
-		// 	if err != nil {
-		// 		this.response.Error = err
-		// 		return this.response
-		// 	}
-		// }
-		//
-		// err = os.WriteFile(this.request.Dir+"/"+file.Name, Byte, 0644)
-		// if err != nil {
-		// 	this.response.Error = err
-		// 	return this.response
-		// }
 	}
 
 	this.response.Text = "1"

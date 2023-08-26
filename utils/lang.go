@@ -22,9 +22,9 @@ func Lang(model ...LangModel) *LangModel {
 	}
 
 	// 设置默认值
-	item.Lang = Ternary[string](!IsEmpty(item.Lang), item.Lang, "zh-cn")
-	item.Mode = Ternary[string](!IsEmpty(item.Mode), item.Mode, "json")
-	item.Directory = Ternary[string](!IsEmpty(item.Directory), item.Directory, "config/i18n/")
+	item.Lang = Ternary[string](!Is.Empty(item.Lang), item.Lang, "zh-cn")
+	item.Mode = Ternary[string](!Is.Empty(item.Mode), item.Mode, "json")
+	item.Directory = Ternary[string](!Is.Empty(item.Directory), item.Directory, "config/i18n/")
 
 	return item
 }
@@ -41,21 +41,21 @@ func (this *LangModel) Value(key any, args ...any) (result any) {
 	text := cast.ToString(key)
 
 	// 解析语言包
-	lang := cast.ToStringMap(JsonDecode(bytes.Text))
+	lang := cast.ToStringMap(Json.Decode(bytes.Text))
 
 	// 获取语言
 	result = lang[text]
 
 	// 如果没有找到语言，通过javascript风格获取
-	if IsEmpty(result) {
-		item, err := JsonGet(bytes.Text, text)
+	if Is.Empty(result) {
+		item, err := Json.Get(bytes.Text, text)
 		if err == nil {
 			result = item
 		}
 	}
 
 	// 如果没有找到语言，则返回原文
-	if IsEmpty(result) {
+	if Is.Empty(result) {
 		return fmt.Sprintf(text, args...)
 	}
 

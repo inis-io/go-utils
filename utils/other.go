@@ -133,11 +133,11 @@ func typeof(args ...any) (typeof string, empty bool) {
 }
 
 func CustomProcessApi(url string, api string) (result string) {
-	if empty := IsEmpty(api); empty {
+	if empty := Is.Empty(api); empty {
 		api = "api"
 	}
 	result = url
-	if empty := IsEmpty(url); !empty {
+	if empty := Is.Empty(url); !empty {
 		prefix := "//"
 		if check := strings.HasPrefix(url, "https://"); check {
 			prefix = "https://"
@@ -145,7 +145,7 @@ func CustomProcessApi(url string, api string) (result string) {
 			prefix = "http://"
 		}
 		// 正则匹配 http(s):// - 并去除
-		url = regexp.MustCompile("^((https|http)?:\\/\\/)").ReplaceAllString(url, "")
+		url = regexp.MustCompile("^((https|http)?://)").ReplaceAllString(url, "")
 		array := ArrayFilter(strings.Split(url, `/`))
 		if len(array) == 1 {
 			result = prefix + array[0] + "/" + api + "/"

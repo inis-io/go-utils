@@ -46,7 +46,7 @@ func ArrayUnique[T any](array []T) (slice []any) {
 // ArrayEmpty - 数组去空
 func ArrayEmpty[T any](array []T) (slice []any) {
 	for _, item := range array {
-		if !IsEmpty(item) {
+		if !Is.Empty(item) {
 			slice = append(slice, item)
 		}
 	}
@@ -59,7 +59,7 @@ func ArrayMapWithField(array []map[string]any, field any) (slice []any) {
 	// 获取字段
 	keys := cast.ToStringSlice(Unity.Keys(field))
 
-	if IsEmpty(keys) {
+	if Is.Empty(keys) {
 		return cast.ToSlice(array)
 	}
 

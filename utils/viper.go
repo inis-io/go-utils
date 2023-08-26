@@ -56,25 +56,25 @@ func (this *ViperModel) Read() (result ViperResponse) {
 
 	item := viper.New()
 
-	if !IsEmpty(this.Path) {
+	if !Is.Empty(this.Path) {
 		item.AddConfigPath(this.Path)
 	}
 
-	if !IsEmpty(this.Mode) {
+	if !Is.Empty(this.Mode) {
 		item.SetConfigType(this.Mode)
 	}
 
-	if !IsEmpty(this.Name) {
+	if !Is.Empty(this.Name) {
 		item.SetConfigName(this.Name)
 	}
 
-	result.Viper  = item
-	result.Error  = item.ReadInConfig()
+	result.Viper = item
+	result.Error = item.ReadInConfig()
 	result.Result = cast.ToStringMap(item.AllSettings())
 
 	if result.Error != nil {
 		// 如果错误中包含文件不存在，则创建文件
-		if !os.IsNotExist(result.Error) && !IsEmpty(this.Content) {
+		if !os.IsNotExist(result.Error) && !Is.Empty(this.Content) {
 
 			path := this.Path + "/" + this.Name + "." + this.Mode
 
@@ -113,9 +113,7 @@ func (this *ViperResponse) Get(key string, def ...any) (result any) {
 	}
 
 	result = this.Viper.Get(key)
-	result = Ternary(!IsEmpty(result), result, item)
-
-	// result = Ternary(this.Result[key] != nil, this.Result[key], this.Viper.Get(key))
+	result = Ternary(!Is.Empty(result), result, item)
 
 	return
 }

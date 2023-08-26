@@ -6,8 +6,12 @@ import (
 	"strings"
 )
 
-// FormatQuery 转 Query 格式
-func FormatQuery(data any) (result string) {
+var Format *FormatStruct
+
+type FormatStruct struct{}
+
+// Query 转 Query 格式
+func (this *FormatStruct) Query(data any) (result string) {
 
 	body := cast.ToStringMap(data)
 

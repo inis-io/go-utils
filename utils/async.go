@@ -10,7 +10,7 @@ type AsyncStruct[T any] struct {
 	// 读写锁
 	Mutex sync.RWMutex
 	// 等待组
-	Wait  sync.WaitGroup
+	Wait sync.WaitGroup
 	// 数据
 	Data T
 }
@@ -30,8 +30,8 @@ func Async[T any]() *AsyncStruct[T] {
 
 	return &AsyncStruct[T]{
 		Mutex: sync.RWMutex{},
-		Wait : sync.WaitGroup{},
-		Data : data,
+		Wait:  sync.WaitGroup{},
+		Data:  data,
 	}
 }
 
@@ -41,7 +41,7 @@ func (this *AsyncStruct[T]) Get(key string) any {
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
 
-	if IsEmpty(this.Data) {
+	if Is.Empty(this.Data) {
 		return nil
 	}
 
@@ -84,7 +84,7 @@ func (this *AsyncStruct[T]) Has(key string) (ok bool) {
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
 
-	if IsEmpty(this.Data) {
+	if Is.Empty(this.Data) {
 		return false
 	}
 

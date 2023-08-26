@@ -8,20 +8,25 @@ import (
 	"strings"
 )
 
-// JsonEncode 编码
-func JsonEncode(data any) (result string) {
+// Json - JSON 处理
+var Json *JsonStruct
+
+type JsonStruct struct{}
+
+// Encode 编码
+func (this *JsonStruct) Encode(data any) (result string) {
 	text, err := json.Marshal(data)
 	return Ternary(err != nil, "", string(text))
 }
 
-// JsonDecode 解码
-func JsonDecode(data any) (result any) {
+// Decode 解码
+func (this *JsonStruct) Decode(data any) (result any) {
 	err := json.Unmarshal([]byte(cast.ToString(data)), &result)
 	return Ternary(err != nil, nil, result)
 }
 
-// JsonGet 获取json中的值 - 支持多级
-func JsonGet(jsonString any, key any) (result any, err error) {
+// Get 获取json中的值 - 支持多级
+func (this *JsonStruct) Get(jsonString any, key any) (result any, err error) {
 
 	if err := json.Unmarshal([]byte(cast.ToString(jsonString)), &result); err != nil {
 		return nil, err
@@ -44,8 +49,8 @@ func JsonGet(jsonString any, key any) (result any, err error) {
 	return result, nil
 }
 
-// JsonString map转json字符串
-func JsonString(data any) (result string) {
+// String map转json字符串
+func (this *JsonStruct) String(data any) (result string) {
 
 	item := cast.ToStringMap(data)
 

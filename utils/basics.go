@@ -26,7 +26,7 @@ func Ternary[T any](IF bool, TRUE T, FALSE T) T {
 
 // Default - 设置默认值
 func Default[T any](param T, value ...T) (result T) {
-	if IsEmpty(param) {
+	if Is.Empty(param) {
 		if len(value) > 0 {
 			return value[0]
 		}

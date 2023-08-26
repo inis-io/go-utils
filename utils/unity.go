@@ -5,14 +5,19 @@ import (
 	"regexp"
 )
 
-// UnityIds 参数归一化
-func UnityIds(param ...any) (ids []any) {
+// Unity - 统一规范化
+var Unity *UnityStruct
+
+type UnityStruct struct{}
+
+// Ids 参数归一化
+func (this *UnityStruct) Ids(param ...any) (ids []any) {
 
 	fn := func(param any) (ids []any) {
 
 		types := []string{"string", "int", "int64", "float", "float64"}
 
-		if InArray(GetType(param), types) {
+		if InArray(Get.Type(param), types) {
 			// 正则提取数字部分
 			item := regexp.MustCompile(`\d+`).FindAllString(cast.ToString(param), -1)
 			for _, val := range item {
@@ -20,7 +25,7 @@ func UnityIds(param ...any) (ids []any) {
 			}
 
 		}
-		if GetType(param) == "slice" {
+		if Get.Type(param) == "slice" {
 			item := cast.ToStringSlice(param)
 			for _, val := range item {
 				ids = append(ids, cast.ToInt(val))
@@ -36,8 +41,8 @@ func UnityIds(param ...any) (ids []any) {
 	return ArrayUnique(ArrayEmpty(ids))
 }
 
-// UnityKeys 参数归一化
-func UnityKeys(param any, reg ...any) (keys []any) {
+// Keys 参数归一化
+func (this *UnityStruct) Keys(param any, reg ...any) (keys []any) {
 
 	// 正则表达式
 	var regex string
@@ -47,7 +52,7 @@ func UnityKeys(param any, reg ...any) (keys []any) {
 		regex = `[^,]+`
 	}
 
-	if GetType(param) == "string" {
+	if Get.Type(param) == "string" {
 
 		item := regexp.MustCompile(regex).FindAllString(cast.ToString(param), -1)
 
@@ -55,7 +60,7 @@ func UnityKeys(param any, reg ...any) (keys []any) {
 			keys = append(keys, val)
 		}
 	}
-	if GetType(param) == "slice" {
+	if Get.Type(param) == "slice" {
 		item := cast.ToStringSlice(param)
 		for _, val := range item {
 			keys = append(keys, val)

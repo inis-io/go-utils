@@ -7,7 +7,12 @@ import (
 	"time"
 )
 
-func NetTcping(host any, opts ...map[string]any) (ok bool, detail []map[string]any) {
+// Net - 网络
+var Net *NetStruct
+
+type NetStruct struct{}
+
+func (this *NetStruct) Tcping(host any, opts ...map[string]any) (ok bool, detail []map[string]any) {
 
 	if len(opts) == 0 {
 		opts = append(opts, map[string]any{
@@ -16,8 +21,8 @@ func NetTcping(host any, opts ...map[string]any) (ok bool, detail []map[string]a
 		})
 	}
 
-	opt     := opts[0]
-	count   := cast.ToInt(opt["count"])
+	opt := opts[0]
+	count := cast.ToInt(opt["count"])
 	timeout := cast.ToDuration(opt["timeout"]) * time.Second
 
 	// 读写锁 - 防止并发写入

@@ -134,7 +134,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 	// 判断 rules 是否包含 required
 	if !InArray("required", cast.ToStringSlice(rules)) {
 		// 判断 value 是否为空
-		if IsEmpty(value) {
+		if Is.Empty(value) {
 			// 结束本次循环，进入下一次循环
 			return nil
 		}
@@ -172,7 +172,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 
 			switch val {
 			case "required":
-				if IsEmpty(value) {
+				if Is.Empty(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " is not empty!"
@@ -180,7 +180,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "email":
-				if !IsEmail(value) {
+				if !Is.Email(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <email> format!"
@@ -188,7 +188,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "number":
-				if !IsNumber(value) {
+				if !Is.Number(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <number> format!"
@@ -196,7 +196,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "float":
-				if !IsFloat(value) {
+				if !Is.Float(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <float> format!"
@@ -204,7 +204,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "bool":
-				if !IsBool(value) {
+				if !Is.Bool(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <bool> format!"
@@ -212,7 +212,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "slice":
-				if !IsSlice(value) {
+				if !Is.Slice(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <array> format!"
@@ -220,7 +220,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "jsonStr":
-				if !IsJsonString(value) {
+				if !Is.JsonString(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <json string> format!"
@@ -228,7 +228,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "accepted":
-				if !IsAccepted(value) {
+				if !Is.Accepted(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -236,7 +236,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "date":
-				if !IsDate(value) {
+				if !Is.Date(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect! Required in <date> format!"
@@ -244,7 +244,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "alpha":
-				if !IsAlpha(value) {
+				if !Is.Alpha(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -252,7 +252,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "alphaNum":
-				if !IsAlphaNum(value) {
+				if !Is.AlphaNum(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -260,7 +260,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "alphaDash":
-				if !IsAlphaDash(value) {
+				if !Is.AlphaDash(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -268,7 +268,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "chs":
-				if !IsChs(value) {
+				if !Is.Chs(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -276,7 +276,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "chsAlpha":
-				if !IsChsAlpha(value) {
+				if !Is.ChsAlpha(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -284,7 +284,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "chsAlphaNum":
-				if !IsChsAlphaNum(value) {
+				if !Is.ChsAlphaNum(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -292,7 +292,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "chsDash":
-				if !IsChsDash(value) {
+				if !Is.ChsDash(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -300,7 +300,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "cntrl":
-				if !IsCntrl(value) {
+				if !Is.Cntrl(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -308,7 +308,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "graph":
-				if !IsGraph(value) {
+				if !Is.Graph(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -316,7 +316,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "lower":
-				if !IsLower(value) {
+				if !Is.Lower(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -324,7 +324,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "upper":
-				if !IsUpper(value) {
+				if !Is.Upper(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -332,7 +332,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "space":
-				if !IsSpace(value) {
+				if !Is.Space(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -340,7 +340,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "xdigit":
-				if !IsXdigit(value) {
+				if !Is.Xdigit(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -348,7 +348,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "activeUrl":
-				if !IsActiveUrl(value) {
+				if !Is.ActiveUrl(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -356,7 +356,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "url":
-				if !IsUrl(value) {
+				if !Is.Url(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -364,7 +364,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "ip":
-				if !IsIp(value) {
+				if !Is.Ip(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -372,7 +372,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "mobile":
-				if !IsMobile(value) {
+				if !Is.Mobile(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -380,7 +380,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "idCard":
-				if !IsIdCard(value) {
+				if !Is.IdCard(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -388,7 +388,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "MacAddr":
-				if !IsMacAddr(value) {
+				if !Is.MacAddr(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
@@ -396,7 +396,7 @@ func ValidateRules(name string, value any, rule string, message map[string]strin
 					return fmt.Errorf(msg)
 				}
 			case "zip":
-				if !IsZip(value) {
+				if !Is.Zip(value) {
 					msg := message[name+"."+val]
 					if msg == "" {
 						msg = name + " format is incorrect!"
