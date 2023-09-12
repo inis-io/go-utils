@@ -67,5 +67,13 @@ func (this *UnityStruct) Keys(param any, reg ...any) (keys []any) {
 		}
 	}
 
-	return ArrayUnique(ArrayEmpty(keys))
+	// 去重 - 去空
+	keys = ArrayUnique(ArrayEmpty(keys))
+
+	// 遍历每一项，去重空格
+	for key, val := range keys {
+		keys[key] = regexp.MustCompile(`\s+`).ReplaceAllString(cast.ToString(val), "")
+	}
+
+	return keys
 }
