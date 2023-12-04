@@ -281,7 +281,12 @@ func (this *FileStruct) Download(path ...any) (result *FileResponse) {
 		this.response.Error = err
 		return this.response
 	}
-	defer saveFile.Close()
+	defer func(saveFile *os.File) {
+		err := saveFile.Close()
+		if err != nil {
+			return
+		}
+	}(saveFile)
 
 	_, err = io.Copy(saveFile, resp.Body)
 	if err != nil {
@@ -854,4 +859,41 @@ func (this *FileStruct) extract(file *zip.File, dir string) (err error) {
 	}
 
 	return nil
+}
+
+// Rename 重命名文件
+func (this *FileStruct) Rename(path ...any) (result *FileResponse) {
+
+	if len(path) != 0 {
+		this.request.Path = cast.ToString(path[0])
+	}
+
+	if Is.Empty(this.request.Path) {
+		this.response.Error = errors.New("文件路径不能为空")
+		return this.response
+	}
+
+	if Is.Empty(this.request.Name) {
+		this.response.Error = errors.New("文件名不能为空")
+		return this.response
+	}
+
+	// 判断文件是否存在
+	if _, err := os.Stat(this.request.Path); os.IsNotExist(err) {
+		this.response.Error = err
+		return this.response
+	}
+
+	// 重命名文件 - 放在同一个目录下
+	err := os.Rename(this.request.Path, filepath.Dir(this.request.Path)+"/"+this.request.Name)
+	if err != nil {
+		this.response.Error = err
+		return this.response
+	}
+
+	this.response.Text = "1"
+	this.response.Result = true
+	this.response.Byte = []byte{1}
+
+	return this.response
 }
