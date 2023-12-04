@@ -6,6 +6,7 @@ func init() {
 	Array.Remove = ArrayRemove
 	Array.Unique = ArrayUnique[any]
 	Array.Empty = ArrayEmpty[any]
+	Array.Reverse = ArrayReverse[any]
 	Array.MapWithField = ArrayMapWithField
 	Map.WithField = MapWithField[map[string]any]
 	Map.WithoutField = MapWithoutField[map[string]any]
@@ -23,6 +24,7 @@ var Array struct {
 	Remove       func(array []string, args ...string) (slice []string)
 	Unique       func(array []any) (slice []any)
 	Empty        func(array []any) (slice []any)
+	Reverse      func(array []any) (slice []any)
 	MapWithField func(array []map[string]any, field any) (slice []any)
 }
 

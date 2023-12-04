@@ -70,3 +70,11 @@ func ArrayMapWithField(array []map[string]any, field any) (slice []any) {
 
 	return slice
 }
+
+// ArrayReverse - 数组反转
+func ArrayReverse[T any](array []T) (slice []T) {
+	for i, j := 0, len(array)-1; i < j; i, j = i+1, j-1 {
+		array[i], array[j] = array[j], array[i]
+	}
+	return array
+}
