@@ -1,6 +1,7 @@
 package utils
 
 import (
+	JSON "encoding/json"
 	"fmt"
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
@@ -13,6 +14,11 @@ var Json *JsonStruct
 
 type JsonStruct struct{}
 
+// Valid - 验证JSON数据
+func (this *JsonStruct) Valid(data any) (result bool) {
+	return json.Valid([]byte(cast.ToString(data)))
+}
+
 // Encode 编码
 func (this *JsonStruct) Encode(data any) (result string) {
 	text, err := json.Marshal(data)
@@ -23,6 +29,11 @@ func (this *JsonStruct) Encode(data any) (result string) {
 func (this *JsonStruct) Decode(data any) (result any) {
 	err := json.Unmarshal([]byte(cast.ToString(data)), &result)
 	return Ternary(err != nil, nil, result)
+}
+
+// Unmarshal 解码
+func (this *JsonStruct) Unmarshal(data []byte, result any) (err error) {
+	return JSON.Unmarshal(data, result)
 }
 
 // Get 获取json中的值 - 支持多级
