@@ -23,6 +23,20 @@ func (this *UrlStruct) Encoded(params map[string]any) string {
 	return strings.Join(parts, "&")
 }
 
+// EncodedKeys - 获取 URL 查询字符串的键
+func (this *UrlStruct) EncodedKeys(params map[string]any) []string {
+
+	encoded := this.Encoded(params)
+	// & 分隔数组，字符串转数组
+	keys := strings.Split(encoded, "&")
+	// 去除 = 号之后的内容，包含 = 号
+	for i, item := range keys {
+		keys[i] = item[:strings.Index(item, "=")]
+	}
+
+	return keys
+}
+
 // build - 构建 URL 查询字符串
 func (this *UrlStruct) build(key string, value any) []string {
 
