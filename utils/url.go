@@ -13,6 +13,7 @@ type UrlStruct struct {
 
 // Encoded - 将 map 编码为 URL 查询字符串 - x-www-form-urlencoded
 func (this *UrlStruct) Encoded(params map[string]any) string {
+
 	var parts []string
 
 	for key, value := range params {

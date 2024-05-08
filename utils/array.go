@@ -78,3 +78,13 @@ func ArrayReverse[T any](array []T) (slice []T) {
 	}
 	return array
 }
+
+// ArrayDiff - 数组差集
+func ArrayDiff[T any](array1, array2 []T) (slice []T) {
+	for _, item := range array1 {
+		if !InArray(item, array2) {
+			slice = append(slice, item)
+		}
+	}
+	return slice
+}
