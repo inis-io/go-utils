@@ -1,4 +1,4 @@
-module github.com/unti-io/go-utils
+module github.com/inis-io/go-utils
 
 go 1.20
 

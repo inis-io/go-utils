@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/unti-io/go-utils/utils"
+	"github.com/inis-io/go-utils/utils"
 )
 
 func main() {

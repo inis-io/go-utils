@@ -3,7 +3,7 @@
 
 ### 安装
 ```bash
-go get github.com/unti-io/go-utils
+go get github.com/inis-io/go-utils
 ```
 
 ### 使用
