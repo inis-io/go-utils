@@ -330,7 +330,7 @@ func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
 }
 
 // GenPublicKey - 给定 RSA 公钥字符串格式化为标准头部和尾部
-func (this *RSAResponse) GenPublicKey(key string) (string, error) {
+func (this *RSAStruct) GenPublicKey(key string) (string, error) {
 
 	const lineLength = 64
 	var builder strings.Builder
@@ -356,7 +356,7 @@ func (this *RSAResponse) GenPublicKey(key string) (string, error) {
 }
 
 // GenPrivateKey - 给定 RSA 私钥字符串格式化为标准头部和尾部
-func (this *RSAResponse) GenPrivateKey(key string) (string, error) {
+func (this *RSAStruct) GenPrivateKey(key string) (string, error) {
 
 	const lineLength = 64
 	var builder strings.Builder
