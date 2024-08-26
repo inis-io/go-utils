@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cast"
 	"hash/fnv"
 	rand2 "math/rand"
+	"strings"
 	"time"
 )
 
@@ -212,6 +213,10 @@ type RSAResponse struct {
 }
 
 // Generate 生成 RSA 密钥对
+/**
+ * @name Generate 生成 RSA 密钥对
+ * @param bits 位数 1024, 2048, 4096（一般：2048）
+ */
 func (this *RSAStruct) Generate(bits any) (result *RSAResponse) {
 
 	result = &RSAResponse{}
@@ -322,4 +327,56 @@ func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
 	result.Text = string(encode)
 
 	return result
+}
+
+// GenPublicKey - 给定 RSA 公钥字符串格式化为标准头部和尾部
+func (this *RSAResponse) GenPublicKey(key string) (string, error) {
+
+	const lineLength = 64
+	var builder strings.Builder
+
+	// Decode the PEM block to check if the key is valid
+	block, _ := pem.Decode([]byte(key))
+	if block == nil || block.Type != "RSA PUBLIC KEY" {
+		return "", errors.New("invalid RSA public key")
+	}
+
+	builder.WriteString("-----BEGIN RSA PUBLIC KEY-----\n")
+
+	for i := 0; i < len(key); i += lineLength {
+		end := i + lineLength
+		if end > len(key) {
+			end = len(key)
+		}
+		builder.WriteString(key[i:end] + "\n")
+	}
+
+	builder.WriteString("-----END RSA PUBLIC KEY-----")
+	return builder.String(), nil
+}
+
+// GenPrivateKey - 给定 RSA 私钥字符串格式化为标准头部和尾部
+func (this *RSAResponse) GenPrivateKey(key string) (string, error) {
+
+	const lineLength = 64
+	var builder strings.Builder
+
+	// Decode the PEM block to check if the key is valid
+	block, _ := pem.Decode([]byte(key))
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return "", errors.New("invalid RSA private key")
+	}
+
+	builder.WriteString("-----BEGIN RSA PRIVATE KEY-----\n")
+
+	for i := 0; i < len(key); i += lineLength {
+		end := i + lineLength
+		if end > len(key) {
+			end = len(key)
+		}
+		builder.WriteString(key[i:end] + "\n")
+	}
+
+	builder.WriteString("-----END RSA PRIVATE KEY-----")
+	return builder.String(), nil
 }
