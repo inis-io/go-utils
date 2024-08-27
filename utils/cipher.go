@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cast"
 	"hash/fnv"
 	rand2 "math/rand"
-	"strings"
 	"time"
 )
 
@@ -329,54 +328,38 @@ func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
 	return result
 }
 
-// GenPublicKey - 给定 RSA 公钥字符串格式化为标准头部和尾部
-func (this *RSAStruct) GenPublicKey(key string) (string, error) {
+// PemPublicKey - 输出完整的 PEM 格式公钥证书
+func (this *RSAStruct) PemPublicKey(key string) (string, error) {
 
-	const lineLength = 64
-	var builder strings.Builder
-
-	// Decode the PEM block to check if the key is valid
-	block, _ := pem.Decode([]byte(key))
-	if block == nil || block.Type != "RSA PUBLIC KEY" {
-		return "", errors.New("invalid RSA public key")
+	// 创建 PEM 格式块
+	block := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: []byte(key),
 	}
 
-	builder.WriteString("-----BEGIN RSA PUBLIC KEY-----\n")
-
-	for i := 0; i < len(key); i += lineLength {
-		end := i + lineLength
-		if end > len(key) {
-			end = len(key)
-		}
-		builder.WriteString(key[i:end] + "\n")
+	// 生成完整的 PEM 证书字符串
+	var pemBuf bytes.Buffer
+	if err := pem.Encode(&pemBuf, block); err != nil {
+		return "", err
 	}
 
-	builder.WriteString("-----END RSA PUBLIC KEY-----")
-	return builder.String(), nil
+	return pemBuf.String(), nil
 }
 
-// GenPrivateKey - 给定 RSA 私钥字符串格式化为标准头部和尾部
-func (this *RSAStruct) GenPrivateKey(key string) (string, error) {
+// PemPrivateKey - 输出完整的 PEM 格式私钥证书
+func (this *RSAStruct) PemPrivateKey(key string) (string, error) {
 
-	const lineLength = 64
-	var builder strings.Builder
-
-	// Decode the PEM block to check if the key is valid
-	block, _ := pem.Decode([]byte(key))
-	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return "", errors.New("invalid RSA private key")
+	// 创建 PEM 格式块
+	block := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: []byte(key),
 	}
 
-	builder.WriteString("-----BEGIN RSA PRIVATE KEY-----\n")
-
-	for i := 0; i < len(key); i += lineLength {
-		end := i + lineLength
-		if end > len(key) {
-			end = len(key)
-		}
-		builder.WriteString(key[i:end] + "\n")
+	// 生成完整的 PEM 证书字符串
+	var pemBuf bytes.Buffer
+	if err := pem.Encode(&pemBuf, block); err != nil {
+		return "", err
 	}
 
-	builder.WriteString("-----END RSA PRIVATE KEY-----")
-	return builder.String(), nil
+	return pemBuf.String(), nil
 }
