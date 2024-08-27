@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cast"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -155,4 +156,30 @@ func Calc(input any) (output float64) {
 	}
 
 	return result[0]
+}
+
+var Ascii *AsciiStruct
+
+type AsciiStruct struct {}
+
+// ToString - 根据ASCII码排序
+func (this *AsciiStruct) ToString(params map[string]any) (result string) {
+
+	// 字典排序
+	keys := make([]string, 0, len(params))
+	for key := range params {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var item strings.Builder
+	for _, key := range keys {
+		val := params[key]
+		if len(key) > 0 && len(cast.ToString(val)) > 0 {
+			item.WriteString(key + "=" + cast.ToString(val) + "&")
+		}
+	}
+
+	// 返回排序后的字符串
+	return item.String()
 }
