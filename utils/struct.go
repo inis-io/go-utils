@@ -177,3 +177,8 @@ func (this *StructStruct) Slice(obj any) (slice []any) {
 	}
 	return s
 }
+
+// ToStringMap - 将结构体转换为map[string]any
+func (this *StructStruct) ToStringMap(obj any) (result map[string]any) {
+	return cast.ToStringMap(Json.Encode(obj))
+}

@@ -328,8 +328,8 @@ func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
 	return result
 }
 
-// PemPublicKey - 输出完整的 PEM 格式公钥证书
-func (this *RSAStruct) PemPublicKey(key string) (string, error) {
+// PublicPem - 输出完整的 PEM 格式公钥证书
+func (this *RSAStruct) PublicPem(key string) (cert string) {
 
 	// 创建 PEM 格式块
 	block := &pem.Block{
@@ -338,16 +338,14 @@ func (this *RSAStruct) PemPublicKey(key string) (string, error) {
 	}
 
 	// 生成完整的 PEM 证书字符串
-	var pemBuf bytes.Buffer
-	if err := pem.Encode(&pemBuf, block); err != nil {
-		return "", err
-	}
+	var PEM bytes.Buffer
+	if err := pem.Encode(&PEM, block); err != nil { return "" }
 
-	return pemBuf.String(), nil
+	return PEM.String()
 }
 
-// PemPrivateKey - 输出完整的 PEM 格式私钥证书
-func (this *RSAStruct) PemPrivateKey(key string) (string, error) {
+// PrivatePem - 输出完整的 PEM 格式私钥证书
+func (this *RSAStruct) PrivatePem(key string) (cert string) {
 
 	// 创建 PEM 格式块
 	block := &pem.Block{
@@ -356,10 +354,8 @@ func (this *RSAStruct) PemPrivateKey(key string) (string, error) {
 	}
 
 	// 生成完整的 PEM 证书字符串
-	var pemBuf bytes.Buffer
-	if err := pem.Encode(&pemBuf, block); err != nil {
-		return "", err
-	}
+	var PEM bytes.Buffer
+	if err := pem.Encode(&PEM, block); err != nil { return "" }
 
-	return pemBuf.String(), nil
+	return PEM.String()
 }

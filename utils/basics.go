@@ -180,6 +180,12 @@ func (this *AsciiStruct) ToString(params map[string]any) (result string) {
 		}
 	}
 
+	// 去除最后一个 &
+	text := item.String()
+	if len(text) > 0 {
+		text = text[:len(text)-1]
+	}
+
 	// 返回排序后的字符串
-	return item.String()
+	return text
 }
