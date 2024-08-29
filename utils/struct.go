@@ -182,3 +182,8 @@ func (this *StructStruct) Slice(obj any) (slice []any) {
 func (this *StructStruct) ToStringMap(obj any) (result map[string]any) {
 	return cast.ToStringMap(Json.Encode(obj))
 }
+
+// ToAsciiString - 将结构体转换为ASCII字符串
+func (this *StructStruct) ToAsciiString(obj any) (result string) {
+	return Ascii.ToString(this.ToStringMap(obj))
+}
