@@ -38,10 +38,10 @@ func (this *HashStruct) Sum32(text any) (result string) {
  * @example：
  * token := utils.Hash.Token("test", 16)
  */
-func (this *HashStruct) Token(value string, length int) (result string) {
+func (this *HashStruct) Token(value any, length int) (result string) {
 
 	// 计算 MD5 哈希值
-	hash := md5.Sum([]byte(value))
+	hash := md5.Sum([]byte(cast.ToString(value)))
 	MD5Hash := hex.EncodeToString(hash[:])
 
 	result = MD5Hash[:length]

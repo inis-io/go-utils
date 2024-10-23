@@ -185,5 +185,5 @@ func (this *StructStruct) ToStringMap(obj any) (result map[string]any) {
 
 // ToAsciiString - 将结构体转换为ASCII字符串
 func (this *StructStruct) ToAsciiString(obj any) (result string) {
-	return Ascii.ToString(this.ToStringMap(obj))
+	return Ascii.ToString(this.ToStringMap(obj), true)
 }
