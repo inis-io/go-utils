@@ -11,9 +11,10 @@ func init() {
 	Array.MapWithField = ArrayMapWithField
 	Map.WithField = MapWithField[map[string]any]
 	Map.WithoutField = MapWithoutField[map[string]any]
-	Map.ToURL = MapToURL
-	Map.Keys = MapKeys[map[string]any]
+	Map.ToURL  = MapToURL
+	Map.Keys   = MapKeys[map[string]any]
 	Map.Values = MapValues[map[string]any]
+	Map.Trim   = MapTrim[map[string]any]
 }
 
 var In struct {
@@ -36,4 +37,5 @@ var Map struct {
 	ToURL        func(data map[string]any) (result string)
 	Keys         func(data map[string]any) (result []string)
 	Values       func(data map[string]any) (result []any)
+	Trim	     func(data map[string]any) (result map[string]any)
 }

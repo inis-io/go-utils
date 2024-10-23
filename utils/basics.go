@@ -163,7 +163,7 @@ var Ascii *AsciiStruct
 type AsciiStruct struct {}
 
 // ToString - 根据ASCII码排序
-func (this *AsciiStruct) ToString(params map[string]any) (result string) {
+func (this *AsciiStruct) ToString(params map[string]any, omitempty bool) (result string) {
 
 	// 字典排序
 	keys := make([]string, 0, len(params))
@@ -175,7 +175,7 @@ func (this *AsciiStruct) ToString(params map[string]any) (result string) {
 	var item strings.Builder
 	for _, key := range keys {
 		val := params[key]
-		if len(key) > 0 && len(cast.ToString(val)) > 0 {
+		if len(key) > 0 && (len(cast.ToString(val)) > 0 || !omitempty) {
 			item.WriteString(key + "=" + cast.ToString(val) + "&")
 		}
 	}

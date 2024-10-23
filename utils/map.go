@@ -88,3 +88,14 @@ func MapValues[T map[string]any](data T) (result []any) {
 	}
 	return
 }
+
+// MapTrim - 去除 map 中的空值
+func MapTrim[T map[string]any](data T) (result T) {
+	result = make(T)
+	for key, val := range data {
+		if !Is.Empty(val) {
+			result[key] = val
+		}
+	}
+	return
+}

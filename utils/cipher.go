@@ -34,43 +34,24 @@ func (this *HashStruct) Sum32(text any) (result string) {
 // Token 生成指定长度的指纹令牌
 /**
  * @param value 值
- * @param args  参数
- * @param args[0] 令牌长度，默认长度为 16
- * @param args[1] 令牌前缀，默认前缀为 token
- * @return result 令牌
+ * @param length 令牌长度，默认长度为 16
  * @example：
- * 1. token := facade.Hash.Token("test")
- * 2. token := facade.Hash.Token("test", 32, "token")
+ * token := utils.Hash.Token("test", 16)
  */
-func (this *HashStruct) Token(value any, args ...any) (result string) {
+func (this *HashStruct) Token(value string, length int) (result string) {
 
-	length := 16
-	prefix := "token"
+	// 计算 MD5 哈希值
+	hash := md5.Sum([]byte(value))
+	MD5Hash := hex.EncodeToString(hash[:])
 
-	for index, item := range args {
-		switch index {
-		case 0:
-			length = Ternary(cast.ToInt(item) > 0, cast.ToInt(item), length)
-		case 1:
-			prefix = cast.ToString(item)
-		}
+	result = MD5Hash[:length]
+
+	// 确保结果长度满足要求
+	for len(result) < length {
+		result += this.Token(result, length - len(result))
 	}
 
-	// 先进行 hash 加密
-	hash := Hash.Sum32(prefix + cast.ToString(value))
-	encode := md5.New()
-	encode.Write([]byte(hash))
-
-	// 再进行 hex 编码
-	item := hex.EncodeToString(encode.Sum(nil))
-
-	if len(item) > length {
-		item = item[:length]
-	} else if len(item) < length {
-		item = item + Hash.Token(item, length-len(item))
-	}
-
-	return item
+	return result
 }
 
 // Number 生成指定长度的随机数
