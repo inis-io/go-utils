@@ -44,6 +44,7 @@ func (this *HashStruct) Token(value any, length int) (result string) {
 	hash := md5.Sum([]byte(cast.ToString(value)))
 	MD5Hash := hex.EncodeToString(hash[:])
 
+	if length > len(MD5Hash) { length = len(MD5Hash) }
 	result = MD5Hash[:length]
 
 	// 确保结果长度满足要求
