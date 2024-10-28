@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type AsyncStruct[T any] struct {
+type AsyncClass[T any] struct {
 	// 读写锁
 	Mutex sync.RWMutex
 	// 等待组
@@ -16,7 +16,7 @@ type AsyncStruct[T any] struct {
 }
 
 // Async - 异步数据
-func Async[T any]() *AsyncStruct[T] {
+func Async[T any]() *AsyncClass[T] {
 
 	var data T
 	switch reflect.TypeOf(data).Kind() {
@@ -28,7 +28,7 @@ func Async[T any]() *AsyncStruct[T] {
 		data = reflect.Zero(reflect.TypeOf(data)).Interface().(T)
 	}
 
-	return &AsyncStruct[T]{
+	return &AsyncClass[T]{
 		Mutex: sync.RWMutex{},
 		Wait:  sync.WaitGroup{},
 		Data:  data,
@@ -36,7 +36,7 @@ func Async[T any]() *AsyncStruct[T] {
 }
 
 // Get - 获取数据
-func (this *AsyncStruct[T]) Get(key string) any {
+func (this *AsyncClass[T]) Get(key string) any {
 
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
@@ -58,7 +58,7 @@ func (this *AsyncStruct[T]) Get(key string) any {
 }
 
 // Set - 设置数据
-func (this *AsyncStruct[T]) Set(key string, val any) {
+func (this *AsyncClass[T]) Set(key string, val any) {
 
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
@@ -79,7 +79,7 @@ func (this *AsyncStruct[T]) Set(key string, val any) {
 }
 
 // Has - 判断是否存在
-func (this *AsyncStruct[T]) Has(key string) (ok bool) {
+func (this *AsyncClass[T]) Has(key string) (ok bool) {
 
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
@@ -100,7 +100,7 @@ func (this *AsyncStruct[T]) Has(key string) (ok bool) {
 }
 
 // Result - 获取所有数据
-func (this *AsyncStruct[T]) Result() T {
+func (this *AsyncClass[T]) Result() T {
 	defer this.Mutex.Unlock()
 	this.Mutex.Lock()
 	return this.Data

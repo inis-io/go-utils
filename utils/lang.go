@@ -5,16 +5,16 @@ import (
 	"github.com/spf13/cast"
 )
 
-type LangModel struct {
+type LangClass struct {
 	Directory string // 语言包目录
 	Lang      string // 当前语言
 	Mode      string // 文件类型
 }
 
 // Lang 实例化
-func Lang(model ...LangModel) *LangModel {
+func Lang(model ...LangClass) *LangClass {
 
-	item := new(LangModel)
+	item := new(LangClass)
 
 	// 合并参数
 	if len(model) > 0 {
@@ -29,7 +29,7 @@ func Lang(model ...LangModel) *LangModel {
 	return item
 }
 
-func (this *LangModel) Value(key any, args ...any) (result any) {
+func (this *LangClass) Value(key any, args ...any) (result any) {
 
 	// 读取语言包
 	bytes := File().Byte(this.Directory + this.Lang + "." + this.Mode)

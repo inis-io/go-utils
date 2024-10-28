@@ -10,34 +10,34 @@ import (
 )
 
 // Json - JSON 处理
-var Json *JsonStruct
+var Json *JsonClass
 
-type JsonStruct struct{}
+type JsonClass struct{}
 
 // Valid - 验证JSON数据
-func (this *JsonStruct) Valid(data any) (result bool) {
+func (this *JsonClass) Valid(data any) (result bool) {
 	return json.Valid([]byte(cast.ToString(data)))
 }
 
 // Encode 编码
-func (this *JsonStruct) Encode(data any) (result string) {
+func (this *JsonClass) Encode(data any) (result string) {
 	text, err := json.Marshal(data)
 	return Ternary(err != nil, "", string(text))
 }
 
 // Decode 解码
-func (this *JsonStruct) Decode(data any) (result any) {
+func (this *JsonClass) Decode(data any) (result any) {
 	err := json.Unmarshal([]byte(cast.ToString(data)), &result)
 	return Ternary(err != nil, nil, result)
 }
 
 // Unmarshal 解码
-func (this *JsonStruct) Unmarshal(data []byte, result any) (err error) {
+func (this *JsonClass) Unmarshal(data []byte, result any) (err error) {
 	return JSON.Unmarshal(data, result)
 }
 
 // Get 获取json中的值 - 支持多级
-func (this *JsonStruct) Get(jsonString any, key any) (result any, err error) {
+func (this *JsonClass) Get(jsonString any, key any) (result any, err error) {
 
 	if err := json.Unmarshal([]byte(cast.ToString(jsonString)), &result); err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (this *JsonStruct) Get(jsonString any, key any) (result any, err error) {
 }
 
 // String map转json字符串
-func (this *JsonStruct) String(data any) (result string) {
+func (this *JsonClass) String(data any) (result string) {
 
 	item := cast.ToStringMap(data)
 

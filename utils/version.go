@@ -9,12 +9,12 @@ import (
 )
 
 // Version - 版本
-var Version *VersionStruct
+var Version *VersionClass
 
-type VersionStruct struct{}
+type VersionClass struct{}
 
 // Go - 获取当前go版本号
-func (this *VersionStruct) Go() (result string) {
+func (this *VersionClass) Go() (result string) {
 	return strings.Replace(runtime.Version(), "go", "", -1)
 }
 
@@ -26,7 +26,7 @@ func (this *VersionStruct) Go() (result string) {
  * @example：
  * 	utils.Version.Compare("1.2.0", "1.0.0") // 1
  */
-func (this *VersionStruct) Compare(v1, v2 any) (result int) {
+func (this *VersionClass) Compare(v1, v2 any) (result int) {
 
 	rule := regexp.MustCompile(`\d+`)
 	v1Arr := rule.FindAllString(cast.ToString(v1), -1)

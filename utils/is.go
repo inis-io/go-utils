@@ -7,12 +7,12 @@ import (
 )
 
 // Is - 是否为
-var Is *IsStruct
+var Is *IsClass
 
-type IsStruct struct{}
+type IsClass struct{}
 
 // Email - 是否为邮箱
-func (this *IsStruct) Email(email any) (ok bool) {
+func (this *IsClass) Email(email any) (ok bool) {
 	if email == nil {
 		return false
 	}
@@ -20,7 +20,7 @@ func (this *IsStruct) Email(email any) (ok bool) {
 }
 
 // Phone - 是否为手机号
-func (this *IsStruct) Phone(phone any) (ok bool) {
+func (this *IsClass) Phone(phone any) (ok bool) {
 	if phone == nil {
 		return false
 	}
@@ -28,7 +28,7 @@ func (this *IsStruct) Phone(phone any) (ok bool) {
 }
 
 // Mobile - 是否为手机号
-func (this *IsStruct) Mobile(value any) (ok bool) {
+func (this *IsClass) Mobile(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -36,13 +36,13 @@ func (this *IsStruct) Mobile(value any) (ok bool) {
 }
 
 // Empty - 是否为空
-func (this *IsStruct) Empty(value any) (ok bool) {
+func (this *IsClass) Empty(value any) (ok bool) {
 	_, empty := typeof(value)
 	return empty
 }
 
 // Domain - 是否为域名
-func (this *IsStruct) Domain(domain any) (ok bool) {
+func (this *IsClass) Domain(domain any) (ok bool) {
 	if domain == nil {
 		return false
 	}
@@ -50,17 +50,17 @@ func (this *IsStruct) Domain(domain any) (ok bool) {
 }
 
 // True - 是否为真
-func (this *IsStruct) True(value any) (ok bool) {
+func (this *IsClass) True(value any) (ok bool) {
 	return cast.ToBool(value)
 }
 
 // False - 是否为假
-func (this *IsStruct) False(value any) (ok bool) {
+func (this *IsClass) False(value any) (ok bool) {
 	return !cast.ToBool(value)
 }
 
 // Number - 是否为数字
-func (this *IsStruct) Number(value any) (ok bool) {
+func (this *IsClass) Number(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -68,7 +68,7 @@ func (this *IsStruct) Number(value any) (ok bool) {
 }
 
 // Float - 是否为浮点数
-func (this *IsStruct) Float(value any) (ok bool) {
+func (this *IsClass) Float(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -76,12 +76,12 @@ func (this *IsStruct) Float(value any) (ok bool) {
 }
 
 // Bool - 是否为bool
-func (this *IsStruct) Bool(value any) (ok bool) {
+func (this *IsClass) Bool(value any) (ok bool) {
 	return cast.ToBool(value)
 }
 
 // Accepted - 验证某个字段是否为为 yes, on, 或是 1
-func (this *IsStruct) Accepted(value any) (ok bool) {
+func (this *IsClass) Accepted(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -89,7 +89,7 @@ func (this *IsStruct) Accepted(value any) (ok bool) {
 }
 
 // Date - 是否为日期类型
-func (this *IsStruct) Date(date any) (ok bool) {
+func (this *IsClass) Date(date any) (ok bool) {
 	if date == nil {
 		return false
 	}
@@ -97,7 +97,7 @@ func (this *IsStruct) Date(date any) (ok bool) {
 }
 
 // Alpha - 只能包含字母
-func (this *IsStruct) Alpha(value any) (ok bool) {
+func (this *IsClass) Alpha(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -105,7 +105,7 @@ func (this *IsStruct) Alpha(value any) (ok bool) {
 }
 
 // AlphaNum - 只能包含字母和数字
-func (this *IsStruct) AlphaNum(value any) (ok bool) {
+func (this *IsClass) AlphaNum(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -113,7 +113,7 @@ func (this *IsStruct) AlphaNum(value any) (ok bool) {
 }
 
 // AlphaDash - 只能包含字母、数字和下划线_及破折号-
-func (this *IsStruct) AlphaDash(value any) (ok bool) {
+func (this *IsClass) AlphaDash(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -121,7 +121,7 @@ func (this *IsStruct) AlphaDash(value any) (ok bool) {
 }
 
 // Chs - 是否为汉字
-func (this *IsStruct) Chs(value any) (ok bool) {
+func (this *IsClass) Chs(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -129,7 +129,7 @@ func (this *IsStruct) Chs(value any) (ok bool) {
 }
 
 // ChsAlpha - 只能是汉字、字母
-func (this *IsStruct) ChsAlpha(value any) (ok bool) {
+func (this *IsClass) ChsAlpha(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -137,7 +137,7 @@ func (this *IsStruct) ChsAlpha(value any) (ok bool) {
 }
 
 // ChsAlphaNum - 只能是汉字、字母和数字
-func (this *IsStruct) ChsAlphaNum(value any) (ok bool) {
+func (this *IsClass) ChsAlphaNum(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -145,7 +145,7 @@ func (this *IsStruct) ChsAlphaNum(value any) (ok bool) {
 }
 
 // ChsDash - 只能是汉字、字母、数字和下划线_及破折号-
-func (this *IsStruct) ChsDash(value any) (ok bool) {
+func (this *IsClass) ChsDash(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -153,7 +153,7 @@ func (this *IsStruct) ChsDash(value any) (ok bool) {
 }
 
 // Cntrl - 是否为控制字符 - （换行、缩进、空格）
-func (this *IsStruct) Cntrl(value any) (ok bool) {
+func (this *IsClass) Cntrl(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -161,7 +161,7 @@ func (this *IsStruct) Cntrl(value any) (ok bool) {
 }
 
 // Graph - 是否为可见字符 - （除空格外的所有可打印字符）
-func (this *IsStruct) Graph(value any) (ok bool) {
+func (this *IsClass) Graph(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -169,7 +169,7 @@ func (this *IsStruct) Graph(value any) (ok bool) {
 }
 
 // Lower - 是否为小写字母
-func (this *IsStruct) Lower(value any) (ok bool) {
+func (this *IsClass) Lower(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -177,7 +177,7 @@ func (this *IsStruct) Lower(value any) (ok bool) {
 }
 
 // Upper - 是否为大写字母
-func (this *IsStruct) Upper(value any) (ok bool) {
+func (this *IsClass) Upper(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -185,7 +185,7 @@ func (this *IsStruct) Upper(value any) (ok bool) {
 }
 
 // Space - 是否为空白字符 - （空格、制表符、换页符等）
-func (this *IsStruct) Space(value any) (ok bool) {
+func (this *IsClass) Space(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -193,7 +193,7 @@ func (this *IsStruct) Space(value any) (ok bool) {
 }
 
 // Xdigit - 是否为十六进制字符 - （0-9、a-f、A-F）
-func (this *IsStruct) Xdigit(value any) (ok bool) {
+func (this *IsClass) Xdigit(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -201,7 +201,7 @@ func (this *IsStruct) Xdigit(value any) (ok bool) {
 }
 
 // ActiveUrl - 是否为有效的域名或者IP
-func (this *IsStruct) ActiveUrl(value any) (ok bool) {
+func (this *IsClass) ActiveUrl(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -209,7 +209,7 @@ func (this *IsStruct) ActiveUrl(value any) (ok bool) {
 }
 
 // Ip - 是否为IP
-func (this *IsStruct) Ip(ip any) (ok bool) {
+func (this *IsClass) Ip(ip any) (ok bool) {
 	if ip == nil {
 		return false
 	}
@@ -217,7 +217,7 @@ func (this *IsStruct) Ip(ip any) (ok bool) {
 }
 
 // Url - 是否为URL
-func (this *IsStruct) Url(url any) (ok bool) {
+func (this *IsClass) Url(url any) (ok bool) {
 	if url == nil {
 		return false
 	}
@@ -225,7 +225,7 @@ func (this *IsStruct) Url(url any) (ok bool) {
 }
 
 // IdCard - 是否为有效的身份证号码
-func (this *IsStruct) IdCard(value any) (ok bool) {
+func (this *IsClass) IdCard(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -233,7 +233,7 @@ func (this *IsStruct) IdCard(value any) (ok bool) {
 }
 
 // MacAddr - 是否为有效的MAC地址
-func (this *IsStruct) MacAddr(value any) (ok bool) {
+func (this *IsClass) MacAddr(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -241,7 +241,7 @@ func (this *IsStruct) MacAddr(value any) (ok bool) {
 }
 
 // Zip - 是否为有效的邮政编码
-func (this *IsStruct) Zip(value any) (ok bool) {
+func (this *IsClass) Zip(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -249,7 +249,7 @@ func (this *IsStruct) Zip(value any) (ok bool) {
 }
 
 // String - 是否为字符串
-func (this *IsStruct) String(value any) (ok bool) {
+func (this *IsClass) String(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -257,7 +257,7 @@ func (this *IsStruct) String(value any) (ok bool) {
 }
 
 // Slice - 是否为切片
-func (this *IsStruct) Slice(value any) (ok bool) {
+func (this *IsClass) Slice(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -265,7 +265,7 @@ func (this *IsStruct) Slice(value any) (ok bool) {
 }
 
 // Array - 是否为数组
-func (this *IsStruct) Array(value any) (ok bool) {
+func (this *IsClass) Array(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -273,7 +273,7 @@ func (this *IsStruct) Array(value any) (ok bool) {
 }
 
 // JsonString - 是否为json字符串
-func (this *IsStruct) JsonString(value any) (ok bool) {
+func (this *IsClass) JsonString(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -281,7 +281,7 @@ func (this *IsStruct) JsonString(value any) (ok bool) {
 }
 
 // Map - 是否为map
-func (this *IsStruct) Map(value any) (ok bool) {
+func (this *IsClass) Map(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -289,7 +289,7 @@ func (this *IsStruct) Map(value any) (ok bool) {
 }
 
 // SliceSlice - 是否为二维切片
-func (this *IsStruct) SliceSlice(value any) (ok bool) {
+func (this *IsClass) SliceSlice(value any) (ok bool) {
 	if value == nil {
 		return false
 	}
@@ -297,7 +297,7 @@ func (this *IsStruct) SliceSlice(value any) (ok bool) {
 }
 
 // MapAny - 是否为[]map[string]any
-func (this *IsStruct) MapAny(value any) (ok bool) {
+func (this *IsClass) MapAny(value any) (ok bool) {
 	if value == nil {
 		return false
 	}

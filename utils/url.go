@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-var Url = &UrlStruct{}
+var Url = &UrlClass{}
 
-type UrlStruct struct {
+type UrlClass struct {
 }
 
 // Encoded - 将 map 编码为 URL 查询字符串 - x-www-form-urlencoded
-func (this *UrlStruct) Encoded(params map[string]any) string {
+func (this *UrlClass) Encoded(params map[string]any) string {
 
 	var parts []string
 
@@ -24,7 +24,7 @@ func (this *UrlStruct) Encoded(params map[string]any) string {
 }
 
 // EncodedKeys - 获取 URL 查询字符串的键
-func (this *UrlStruct) EncodedKeys(params map[string]any) []string {
+func (this *UrlClass) EncodedKeys(params map[string]any) []string {
 
 	encoded := this.Encoded(params)
 	// & 分隔数组，字符串转数组
@@ -38,7 +38,7 @@ func (this *UrlStruct) EncodedKeys(params map[string]any) []string {
 }
 
 // build - 构建 URL 查询字符串
-func (this *UrlStruct) build(key string, value any) []string {
+func (this *UrlClass) build(key string, value any) []string {
 
 	var parts []string
 
@@ -69,7 +69,7 @@ func (this *UrlStruct) build(key string, value any) []string {
 }
 
 // stringify - 将任意类型转换为字符串
-func (this *UrlStruct) stringify(value any) string {
+func (this *UrlClass) stringify(value any) string {
 
 	item := reflect.ValueOf(value)
 

@@ -37,13 +37,13 @@ func (this *wrLock) has(key string) (ok bool) {
 }
 
 // Parse - 解析
-var Parse *ParseStruct
+var Parse *ParseClass
 
-type ParseStruct struct{}
+type ParseClass struct {}
 
 // ParamsBefore - 解析参数
 // 把 Content-Type = application/x-www-form-urlencoded 的参数解析成 object.deep.age = 10 的格式
-func (this *ParseStruct) ParamsBefore(params url.Values) (result map[string]any) {
+func (this *ParseClass) ParamsBefore(params url.Values) (result map[string]any) {
 
 	wg := sync.WaitGroup{}
 	wr := wrLock{
@@ -123,7 +123,7 @@ func (this *ParseStruct) ParamsBefore(params url.Values) (result map[string]any)
 
 // Params - 解析参数
 // 把 Content-Type = application/x-www-form-urlencoded 的参数解析成 map[string]any
-func (this *ParseStruct) Params(params map[string]any) (result map[string]any) {
+func (this *ParseClass) Params(params map[string]any) (result map[string]any) {
 
 	wg := sync.WaitGroup{}
 	wr := wrLock{
@@ -174,7 +174,7 @@ func (this *ParseStruct) Params(params map[string]any) (result map[string]any) {
 }
 
 // Domain - 解析域名
-func (this *ParseStruct) Domain(value any) (domain string) {
+func (this *ParseClass) Domain(value any) (domain string) {
 	URL, err := url.Parse(cast.ToString(value))
 	if err != nil {
 		return ""

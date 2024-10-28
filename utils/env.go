@@ -58,29 +58,29 @@ func EnvToml(args ...string) (result any) {
 	}
 }
 
-type EnvModel struct {
+type EnvClass struct {
 	path string
 	mode string
 }
 
-func Env() *EnvModel {
-	return &EnvModel{
+func Env() *EnvClass {
+	return &EnvClass{
 		path: "./config/app.toml",
 		mode: "toml",
 	}
 }
 
-func (this *EnvModel) Path(path string) *EnvModel {
+func (this *EnvClass) Path(path string) *EnvClass {
 	this.path = path
 	return this
 }
 
-func (this *EnvModel) Mode(mode string) *EnvModel {
+func (this *EnvClass) Mode(mode string) *EnvClass {
 	this.mode = mode
 	return this
 }
 
-func (this *EnvModel) All() (result map[string]any) {
+func (this *EnvClass) All() (result map[string]any) {
 
 	if this.mode == "toml" {
 		return cast.ToStringMap(this.TomlAll())
@@ -89,7 +89,7 @@ func (this *EnvModel) All() (result map[string]any) {
 	return nil
 }
 
-func (this *EnvModel) Get(key any, def ...any) (result any) {
+func (this *EnvClass) Get(key any, def ...any) (result any) {
 
 	if this.mode == "toml" {
 		result = this.TomlAll()
@@ -108,7 +108,7 @@ func (this *EnvModel) Get(key any, def ...any) (result any) {
 	return item[cast.ToString(key)]
 }
 
-func (this *EnvModel) TomlAll() (result any) {
+func (this *EnvClass) TomlAll() (result any) {
 
 	// 文件路径
 	viper.SetConfigFile(this.path)

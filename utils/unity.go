@@ -6,12 +6,12 @@ import (
 )
 
 // Unity - 统一规范化
-var Unity *UnityStruct
+var Unity *UnityClass
 
-type UnityStruct struct{}
+type UnityClass struct{}
 
 // Ids 参数归一化
-func (this *UnityStruct) Ids(param ...any) (ids []any) {
+func (this *UnityClass) Ids(param ...any) (ids []any) {
 
 	fn := func(param any) (ids []any) {
 
@@ -42,7 +42,7 @@ func (this *UnityStruct) Ids(param ...any) (ids []any) {
 }
 
 // Keys 参数归一化
-func (this *UnityStruct) Keys(param any, reg ...any) (keys []any) {
+func (this *UnityClass) Keys(param any, reg ...any) (keys []any) {
 
 	// 正则表达式
 	var regex string

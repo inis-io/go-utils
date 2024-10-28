@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type ViperModel struct {
+type ViperClass struct {
 	// 配置文件路径
 	Path string
 	// 配置文件类型
@@ -26,9 +26,9 @@ type ViperResponse struct {
 	Viper *viper.Viper
 }
 
-func Viper(model ...ViperModel) *ViperModel {
+func Viper(model ...ViperClass) *ViperClass {
 
-	var item *ViperModel
+	var item *ViperClass
 
 	if len(model) > 0 {
 		item = &model[0]
@@ -37,22 +37,22 @@ func Viper(model ...ViperModel) *ViperModel {
 	return item
 }
 
-func (this *ViperModel) SetPath(path string) *ViperModel {
+func (this *ViperClass) SetPath(path string) *ViperClass {
 	this.Path = path
 	return this
 }
 
-func (this *ViperModel) SetMode(mode string) *ViperModel {
+func (this *ViperClass) SetMode(mode string) *ViperClass {
 	this.Mode = mode
 	return this
 }
 
-func (this *ViperModel) SetName(name string) *ViperModel {
+func (this *ViperClass) SetName(name string) *ViperClass {
 	this.Name = name
 	return this
 }
 
-func (this *ViperModel) Read() (result ViperResponse) {
+func (this *ViperClass) Read() (result ViperResponse) {
 
 	item := viper.New()
 

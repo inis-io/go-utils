@@ -8,11 +8,11 @@ import (
 )
 
 // Net - 网络
-var Net *NetStruct
+var Net *NetClass
 
-type NetStruct struct{}
+type NetClass struct {}
 
-func (this *NetStruct) Tcping(host any, opts ...map[string]any) (ok bool, detail []map[string]any) {
+func (this *NetClass) Tcping(host any, opts ...map[string]any) (ok bool, detail []map[string]any) {
 
 	if len(opts) == 0 {
 		opts = append(opts, map[string]any{

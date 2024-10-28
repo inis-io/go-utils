@@ -8,12 +8,12 @@ import (
 )
 
 // Rand - 随机数
-var Rand *RandStruct
+var Rand *RandClass
 
-type RandStruct struct{}
+type RandClass struct {}
 
 // Number - 生成指定长度的随机数
-func (this *RandStruct) Number(length any) (result string) {
+func (this *RandClass) Number(length any) (result string) {
 
 	mac := Hash.Sum32(Get.Mac())
 	pid := Get.Pid()
@@ -44,7 +44,7 @@ func (this *RandStruct) Number(length any) (result string) {
 }
 
 // String - 生成随机字符串
-func (this *RandStruct) String(length any, chars ...string) (result string) {
+func (this *RandClass) String(length any, chars ...string) (result string) {
 
 	var charset string
 
@@ -63,8 +63,32 @@ func (this *RandStruct) String(length any, chars ...string) (result string) {
 	return string(item)
 }
 
+// Code - 生成随机验证码
+// number:数字, letter:字母, mix:混合
+func (this *RandClass) Code(length any, mode ...string) (result string) {
+
+	var charset string
+
+	if Is.Empty(mode) {
+		charset = "number"
+	} else {
+		charset = mode[0]
+	}
+
+	switch charset {
+	case "number":
+		return this.Number(length)
+	case "letter":
+		return this.String(length, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	case "mix":
+		return this.String(length, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	default:
+		return this.Number(length)
+	}
+}
+
 // Int - 生成随机整数
-func (this *RandStruct) Int(max any, min ...any) (result int) {
+func (this *RandClass) Int(max any, min ...any) (result int) {
 	if Is.Empty(min) {
 		min = []any{0}
 	}
@@ -80,7 +104,7 @@ func (this *RandStruct) Int(max any, min ...any) (result int) {
 }
 
 // Slice - 返回随机的指定长度的切片
-func (this *RandStruct) Slice(slice []any, limit any) (result []any) {
+func (this *RandClass) Slice(slice []any, limit any) (result []any) {
 
 	// 如果切片为空，直接返回
 	if len(slice) == 0 {
@@ -113,7 +137,7 @@ func (this *RandStruct) Slice(slice []any, limit any) (result []any) {
 }
 
 // MapSlice - 打乱切片顺序
-func (this *RandStruct) MapSlice(slice []map[string]any) (result []map[string]any) {
+func (this *RandClass) MapSlice(slice []map[string]any) (result []map[string]any) {
 
 	// 如果切片为空，直接返回
 	if len(slice) == 0 {

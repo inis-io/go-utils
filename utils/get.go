@@ -10,18 +10,18 @@ import (
 )
 
 // Get - 获取
-var Get *GetStruct
+var Get *GetClass
 
-type GetStruct struct{}
+type GetClass struct{}
 
 // Type - 获取数据类型
-func (this *GetStruct) Type(value any) (result string) {
+func (this *GetClass) Type(value any) (result string) {
 	result, _ = typeof(value)
 	return result
 }
 
 // Ip - 获取客户端IP
-func (this *GetStruct) Ip(key ...string) (result any) {
+func (this *GetClass) Ip(key ...string) (result any) {
 
 	type lock struct {
 		Lock *sync.RWMutex
@@ -72,7 +72,7 @@ func (this *GetStruct) Ip(key ...string) (result any) {
 }
 
 // Mac - 获取本机MAC
-func (this *GetStruct) Mac() (result string) {
+func (this *GetClass) Mac() (result string) {
 
 	interfaces, err := net.Interfaces()
 
@@ -99,7 +99,7 @@ func (this *GetStruct) Mac() (result string) {
 }
 
 // Pid - 获取进程ID
-func (this *GetStruct) Pid() (result int) {
+func (this *GetClass) Pid() (result int) {
 	process, err := os.FindProcess(os.Getpid())
 	if err != nil {
 		return 0
@@ -108,7 +108,7 @@ func (this *GetStruct) Pid() (result int) {
 }
 
 // Pwd - 获取当前目录
-func (this *GetStruct) Pwd() (result string) {
+func (this *GetClass) Pwd() (result string) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return ""

@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-var Mime *MimeStruct
+var Mime *MimeClass
 
-type MimeStruct struct{}
+type MimeClass struct{}
 
 var MimeMap = map[string]string{
 	"js":   "application/javascript",
@@ -42,7 +42,7 @@ var MimeMap = map[string]string{
 }
 
 // Type 获取后缀对应的 mime
-func (this *MimeStruct) Type(suffix any) (mime string) {
+func (this *MimeClass) Type(suffix any) (mime string) {
 	// 获取后缀
 	suffix = strings.ToLower(cast.ToString(suffix))
 	// 取出 . 后面的内容

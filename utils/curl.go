@@ -35,14 +35,14 @@ type CurlResponse struct {
 	Error      error
 }
 
-// CurlStruct - Curl 结构体
-type CurlStruct struct {
+// CurlClass - Curl 结构体
+type CurlClass struct {
 	request  *CurlRequest
 	response *CurlResponse
 }
 
 // Curl - 发起请求 - 入口
-func Curl(request ...CurlRequest) *CurlStruct {
+func Curl(request ...CurlRequest) *CurlClass {
 
 	if len(request) == 0 {
 		request = append(request, CurlRequest{})
@@ -68,7 +68,7 @@ func Curl(request ...CurlRequest) *CurlStruct {
 		request[0].Client = &http.Client{}
 	}
 
-	return &CurlStruct{
+	return &CurlClass{
 		request: &request[0],
 		response: &CurlResponse{
 			Json: make(map[string]any),
@@ -77,60 +77,60 @@ func Curl(request ...CurlRequest) *CurlStruct {
 }
 
 // Get - 发起 GET 请求
-func (this *CurlStruct) Get(url string) *CurlStruct {
+func (this *CurlClass) Get(url string) *CurlClass {
 	this.request.Url = url
 	this.request.Method = "GET"
 	return this
 }
 
 // Post - 发起 POST 请求
-func (this *CurlStruct) Post(url string) *CurlStruct {
+func (this *CurlClass) Post(url string) *CurlClass {
 	this.request.Url = url
 	this.request.Method = "POST"
 	return this
 }
 
 // Put - 发起 PUT 请求
-func (this *CurlStruct) Put(url string) *CurlStruct {
+func (this *CurlClass) Put(url string) *CurlClass {
 	this.request.Url = url
 	this.request.Method = "PUT"
 	return this
 }
 
 // Patch - 发起 PATCH 请求
-func (this *CurlStruct) Patch(url string) *CurlStruct {
+func (this *CurlClass) Patch(url string) *CurlClass {
 	this.request.Url = url
 	this.request.Method = "PATCH"
 	return this
 }
 
 // Delete - 发起 DELETE 请求
-func (this *CurlStruct) Delete(url string) *CurlStruct {
+func (this *CurlClass) Delete(url string) *CurlClass {
 	this.request.Url = url
 	this.request.Method = "DELETE"
 	return this
 }
 
 // Method - 定义请求类型 - 默认 GET
-func (this *CurlStruct) Method(method string) *CurlStruct {
+func (this *CurlClass) Method(method string) *CurlClass {
 	this.request.Method = strings.ToUpper(method)
 	return this
 }
 
 // Url - 定义请求地址
-func (this *CurlStruct) Url(url string) *CurlStruct {
+func (this *CurlClass) Url(url string) *CurlClass {
 	this.request.Url = url
 	return this
 }
 
 // Header - 定义请求头
-func (this *CurlStruct) Header(key any, value any) *CurlStruct {
+func (this *CurlClass) Header(key any, value any) *CurlClass {
 	this.request.Headers[cast.ToString(key)] = cast.ToString(value)
 	return this
 }
 
 // Headers - 批量定义请求头
-func (this *CurlStruct) Headers(headers map[string]any) *CurlStruct {
+func (this *CurlClass) Headers(headers map[string]any) *CurlClass {
 	for key, val := range headers {
 		this.request.Headers[cast.ToString(key)] = cast.ToString(val)
 	}
@@ -138,13 +138,13 @@ func (this *CurlStruct) Headers(headers map[string]any) *CurlStruct {
 }
 
 // Query - 定义请求参数
-func (this *CurlStruct) Query(key any, value any) *CurlStruct {
+func (this *CurlClass) Query(key any, value any) *CurlClass {
 	this.request.Query[cast.ToString(key)] = cast.ToString(value)
 	return this
 }
 
 // Querys - 批量定义请求参数
-func (this *CurlStruct) Querys(params map[string]any) *CurlStruct {
+func (this *CurlClass) Querys(params map[string]any) *CurlClass {
 	for key, val := range params {
 		this.request.Query[cast.ToString(key)] = cast.ToString(val)
 	}
@@ -152,13 +152,13 @@ func (this *CurlStruct) Querys(params map[string]any) *CurlStruct {
 }
 
 // Data - 定义请求数据
-func (this *CurlStruct) Data(key string, value any) *CurlStruct {
+func (this *CurlClass) Data(key string, value any) *CurlClass {
 	this.request.Data[key] = cast.ToString(value)
 	return this
 }
 
 // Datas - 批量定义请求数据
-func (this *CurlStruct) Datas(data map[string]any) *CurlStruct {
+func (this *CurlClass) Datas(data map[string]any) *CurlClass {
 	for key, val := range data {
 		this.request.Data[key] = cast.ToString(val)
 	}
@@ -166,19 +166,19 @@ func (this *CurlStruct) Datas(data map[string]any) *CurlStruct {
 }
 
 // Body - 定义请求体
-func (this *CurlStruct) Body(body any) *CurlStruct {
+func (this *CurlClass) Body(body any) *CurlClass {
 	this.request.Body = body
 	return this
 }
 
 // Client - 定义请求客户端
-func (this *CurlStruct) Client(client *http.Client) *CurlStruct {
+func (this *CurlClass) Client(client *http.Client) *CurlClass {
 	this.request.Client = client
 	return this
 }
 
 // Send - 发起请求
-func (this *CurlStruct) Send() *CurlResponse {
+func (this *CurlClass) Send() *CurlResponse {
 
 	if Is.Empty(this.request.Url) {
 		this.response.Error = errors.New("url is required")

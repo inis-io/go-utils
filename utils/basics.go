@@ -158,12 +158,12 @@ func Calc(input any) (output float64) {
 	return result[0]
 }
 
-var Ascii *AsciiStruct
+var Ascii *AsciiClass
 
-type AsciiStruct struct {}
+type AsciiClass struct {}
 
 // ToString - 根据ASCII码排序
-func (this *AsciiStruct) ToString(params map[string]any, omitempty bool) (result string) {
+func (this *AsciiClass) ToString(params map[string]any, omitempty bool) (result string) {
 
 	// 字典排序
 	keys := make([]string, 0, len(params))

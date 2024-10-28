@@ -6,12 +6,12 @@ import (
 )
 
 // Struct - 操作结构体
-var Struct *StructStruct
+var Struct *StructClass
 
-type StructStruct struct{}
+type StructClass struct {}
 
 // Set - 动态给结构体赋值
-func (this *StructStruct) Set(obj any, key string, val any) {
+func (this *StructClass) Set(obj any, key string, val any) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -43,7 +43,7 @@ func (this *StructStruct) Set(obj any, key string, val any) {
 }
 
 // Get - 动态获取结构体的值
-func (this *StructStruct) Get(obj any, key string) (result any) {
+func (this *StructClass) Get(obj any, key string) (result any) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -64,7 +64,7 @@ func (this *StructStruct) Get(obj any, key string) (result any) {
 }
 
 // Del - 删除结构体的字段
-func (this *StructStruct) Del(obj any, key string) {
+func (this *StructClass) Del(obj any, key string) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -84,7 +84,7 @@ func (this *StructStruct) Del(obj any, key string) {
 }
 
 // Has - 判断结构体是否存在某个字段
-func (this *StructStruct) Has(obj any, key string) (ok bool) {
+func (this *StructClass) Has(obj any, key string) (ok bool) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -104,7 +104,7 @@ func (this *StructStruct) Has(obj any, key string) (ok bool) {
 }
 
 // Keys - 获取结构体的字段
-func (this *StructStruct) Keys(obj any) (slice []string) {
+func (this *StructClass) Keys(obj any) (slice []string) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -124,7 +124,7 @@ func (this *StructStruct) Keys(obj any) (slice []string) {
 }
 
 // Values - 获取结构体的值
-func (this *StructStruct) Values(obj any) (slice []any) {
+func (this *StructClass) Values(obj any) (slice []any) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 定义一个切片
@@ -138,14 +138,14 @@ func (this *StructStruct) Values(obj any) (slice []any) {
 }
 
 // Len - 获取结构体的长度
-func (this *StructStruct) Len(obj any) (length int) {
+func (this *StructClass) Len(obj any) (length int) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	return value.NumField()
 }
 
 // Map - 将结构体转换为map
-func (this *StructStruct) Map(obj any) (result map[string]any) {
+func (this *StructClass) Map(obj any) (result map[string]any) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 获取结构体的类型
@@ -165,7 +165,7 @@ func (this *StructStruct) Map(obj any) (result map[string]any) {
 }
 
 // Slice - 将结构体转换为切片
-func (this *StructStruct) Slice(obj any) (slice []any) {
+func (this *StructClass) Slice(obj any) (slice []any) {
 	// 获取结构体的值
 	value := reflect.ValueOf(obj).Elem()
 	// 定义一个切片
@@ -179,11 +179,11 @@ func (this *StructStruct) Slice(obj any) (slice []any) {
 }
 
 // ToStringMap - 将结构体转换为map[string]any
-func (this *StructStruct) ToStringMap(obj any) (result map[string]any) {
+func (this *StructClass) ToStringMap(obj any) (result map[string]any) {
 	return cast.ToStringMap(Json.Encode(obj))
 }
 
 // ToAsciiString - 将结构体转换为ASCII字符串
-func (this *StructStruct) ToAsciiString(obj any) (result string) {
+func (this *StructClass) ToAsciiString(obj any) (result string) {
 	return Ascii.ToString(this.ToStringMap(obj), true)
 }

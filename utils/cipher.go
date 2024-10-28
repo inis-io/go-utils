@@ -19,13 +19,13 @@ import (
 	"time"
 )
 
-type HashStruct struct{}
+type HashClass struct{}
 
 // Hash - 哈希加密
-var Hash *HashStruct
+var Hash *HashClass
 
 // Sum32 - 哈希加密
-func (this *HashStruct) Sum32(text any) (result string) {
+func (this *HashClass) Sum32(text any) (result string) {
 	item := fnv.New32()
 	_, err := item.Write([]byte(cast.ToString(text)))
 	return cast.ToString(Ternary[any](err != nil, nil, item.Sum32()))
@@ -38,7 +38,7 @@ func (this *HashStruct) Sum32(text any) (result string) {
  * @example：
  * token := utils.Hash.Token("test", 16)
  */
-func (this *HashStruct) Token(value any, length int) (result string) {
+func (this *HashClass) Token(value any, length int) (result string) {
 
 	// 计算 MD5 哈希值
 	hash := md5.Sum([]byte(cast.ToString(value)))
@@ -62,7 +62,7 @@ func (this *HashStruct) Token(value any, length int) (result string) {
  * @example：
  * 1. number := facade.Hash.Number(6)
  */
-func (this *HashStruct) Number(length any) (result string) {
+func (this *HashClass) Number(length any) (result string) {
 
 	// 生成一个随机种子
 	rand2.NewSource(time.Now().UnixNano())
@@ -178,9 +178,9 @@ func (this *AESRequest) Decrypt(text any) (result *AESResponse) {
 	return
 }
 
-var RSA *RSAStruct
+var RSA *RSAClass
 
-type RSAStruct struct{}
+type RSAClass struct{}
 
 type RSAResponse struct {
 	// 私钥
@@ -198,7 +198,7 @@ type RSAResponse struct {
  * @name Generate 生成 RSA 密钥对
  * @param bits 位数 1024, 2048, 4096（一般：2048）
  */
-func (this *RSAStruct) Generate(bits any) (result *RSAResponse) {
+func (this *RSAClass) Generate(bits any) (result *RSAResponse) {
 
 	result = &RSAResponse{}
 
@@ -236,7 +236,7 @@ func (this *RSAStruct) Generate(bits any) (result *RSAResponse) {
 }
 
 // Encrypt 加密
-func (this *RSAStruct) Encrypt(publicKey, text string) (result *RSAResponse) {
+func (this *RSAClass) Encrypt(publicKey, text string) (result *RSAResponse) {
 
 	result = &RSAResponse{}
 
@@ -271,7 +271,7 @@ func (this *RSAStruct) Encrypt(publicKey, text string) (result *RSAResponse) {
 }
 
 // Decrypt 解密
-func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
+func (this *RSAClass) Decrypt(privateKey, text string) (result *RSAResponse) {
 
 	result = &RSAResponse{}
 
@@ -311,7 +311,7 @@ func (this *RSAStruct) Decrypt(privateKey, text string) (result *RSAResponse) {
 }
 
 // PublicPem - 输出完整的 PEM 格式公钥证书
-func (this *RSAStruct) PublicPem(key string) (cert string) {
+func (this *RSAClass) PublicPem(key string) (cert string) {
 
 	// 创建 PEM 格式块
 	block := &pem.Block{
@@ -327,7 +327,7 @@ func (this *RSAStruct) PublicPem(key string) (cert string) {
 }
 
 // PrivatePem - 输出完整的 PEM 格式私钥证书
-func (this *RSAStruct) PrivatePem(key string) (cert string) {
+func (this *RSAClass) PrivatePem(key string) (cert string) {
 
 	// 创建 PEM 格式块
 	block := &pem.Block{
