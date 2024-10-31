@@ -3,6 +3,7 @@ package utils
 func init() {
 	In.Array = InArray[any]
 	Array.Diff = ArrayDiff[any]
+	Array.Intersect = ArrayIntersect[any]
 	Array.Filter = ArrayFilter
 	Array.Remove = ArrayRemove
 	Array.Unique = ArrayUnique[any]
@@ -23,6 +24,7 @@ var In struct {
 
 var Array struct {
 	Diff         func(array1, array2 []any) (slice []any)
+	Intersect	 func(array1, array2 []any) (slice []any)
 	Filter       func(array []string) (slice []string)
 	Remove       func(array []string, args ...string) (slice []string)
 	Unique       func(array []any) (slice []any)

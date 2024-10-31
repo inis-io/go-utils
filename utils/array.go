@@ -88,3 +88,13 @@ func ArrayDiff[T any](array1, array2 []T) (slice []T) {
 	}
 	return slice
 }
+
+// ArrayIntersect - 交集
+func ArrayIntersect[T any](array1, array2 []T) (slice []T) {
+	for _, item := range array1 {
+		if InArray(item, array2) {
+			slice = append(slice, item)
+		}
+	}
+	return slice
+}
