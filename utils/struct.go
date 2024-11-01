@@ -35,7 +35,11 @@ func (this *StructClass) Set(obj any, key string, val any) {
 			case reflect.Float32, reflect.Float64:
 				value.Field(i).SetFloat(cast.ToFloat64(val))
 			default:
-				value.Field(i).Set(reflect.ValueOf(val))
+				if val == nil {
+					val = reflect.Zero(field.Type).Interface()
+				} else {
+					value.Field(i).Set(reflect.ValueOf(val))
+				}
 			}
 			return
 		}
