@@ -10,14 +10,22 @@ import (
 
 var Cases *CasesClass
 
-type CasesClass struct {
-	// 参数
-	Params *CasesParams
-}
-
 type CasesParams struct {
 	// 是否大写
 	IsUpper bool
+}
+
+type CasesClass struct {
+	// 参数
+	Params CasesParams
+}
+
+func init() {
+	Cases = &CasesClass{
+		Params: CasesParams{
+			IsUpper: false,
+		},
+	}
 }
 
 // IsUpper 是否大写
