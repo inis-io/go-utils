@@ -77,3 +77,65 @@ func (this *UnityClass) Keys(param any, reg ...any) (keys []any) {
 
 	return keys
 }
+
+// Int 参数归一化
+func (this *UnityClass) Int(value ...any) (array []int) {
+
+	fn := func(value any) (resp []int) {
+
+		types := []string{"string", "int", "int64", "float", "float64"}
+
+		if InArray(Get.Type(value), types) {
+			// 正则提取数字部分，包含0
+			item := regexp.MustCompile(`-?\d+`).FindAllString(cast.ToString(value), -1)
+			for _, val := range item {
+				resp = append(resp, cast.ToInt(val))
+			}
+		}
+
+		if Get.Type(value) == "slice" {
+			item := cast.ToStringSlice(value)
+			for _, val := range item {
+				resp = append(resp, cast.ToInt(val))
+			}
+		}
+		return resp
+	}
+
+	for _, val := range value {
+		array = append(array, fn(val)...)
+	}
+
+	return ArrayUnique(array)
+}
+
+// Float 参数归一化
+func (this *UnityClass) Float(value ...any) (array []float64) {
+
+	fn := func(value any) (resp []float64) {
+
+		types := []string{"string", "int", "int64", "float", "float64"}
+
+		if InArray(Get.Type(value), types) {
+			// 正则提取数字部分，包含正数，负数，0和小数
+			item := regexp.MustCompile(`-?\d+(\.\d+)?`).FindAllString(cast.ToString(value), -1)
+
+			for _, val := range item {
+				resp = append(resp, cast.ToFloat64(val))
+			}
+		}
+		if Get.Type(value) == "slice" {
+			item := cast.ToStringSlice(value)
+			for _, val := range item {
+				resp = append(resp, cast.ToFloat64(val))
+			}
+		}
+		return resp
+	}
+
+	for _, val := range value {
+		array = append(array, fn(val)...)
+	}
+
+	return ArrayUnique(array)
+}

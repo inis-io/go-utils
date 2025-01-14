@@ -32,7 +32,7 @@ func ArrayRemove(array []string, args ...string) []string {
 }
 
 // ArrayUnique - 数组去重
-func ArrayUnique[T any](array []T) (slice []any) {
+func ArrayUnique[T any](array []T) (slice []T) {
 	list := make(map[any]bool)
 	for _, item := range array {
 		if !list[item] {
@@ -44,7 +44,7 @@ func ArrayUnique[T any](array []T) (slice []any) {
 }
 
 // ArrayEmpty - 数组去空
-func ArrayEmpty[T any](array []T) (slice []any) {
+func ArrayEmpty[T any](array []T) (slice []T) {
 	for _, item := range array {
 		if !Is.Empty(item) {
 			slice = append(slice, item)
