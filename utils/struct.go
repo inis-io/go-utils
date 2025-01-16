@@ -191,3 +191,25 @@ func (this *StructClass) ToStringMap(obj any) (result map[string]any) {
 func (this *StructClass) ToAsciiString(obj any) (result string) {
 	return Ascii.ToString(this.ToStringMap(obj), true)
 }
+
+// Fields - 获取结构体的字段名
+func (this *StructClass) Fields(dest any) []string {
+
+	// 获取结构体的反射值
+	item := reflect.ValueOf(dest)
+	// 确保传递的是一个指针
+	if item.Kind() == reflect.Ptr {
+		item = item.Elem()
+	}
+	// 确保反射值的类型是结构体
+	if item.Kind()!= reflect.Struct { return nil }
+
+	_type := item.Type()
+	field := make([]string, item.NumField())
+
+	for i := 0; i < item.NumField(); i++ {
+		field[i] = _type.Field(i).Name
+	}
+
+	return field
+}
