@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/spf13/cast"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -180,4 +182,43 @@ func (this *ParseClass) Domain(value any) (domain string) {
 		return ""
 	}
 	return URL.Hostname()
+}
+
+type Language struct {
+	Language string
+	Quality  float64
+}
+
+// AcceptLanguage - 解析请求头的 Accept-Language
+func (this *ParseClass) AcceptLanguage(value string) (string, []Language, error) {
+
+	var hot Language
+	var items []Language
+
+	for _, val := range strings.Split(value, ",") {
+
+		params  := strings.Split(val, ";")
+		lang    := params[0]
+		quality := 1.0
+
+		if len(params) > 1 {
+			q, err := strconv.ParseFloat(strings.TrimPrefix(params[1], "q="), 64)
+			if err != nil {
+				return "", nil, fmt.Errorf("invalid quality value: %v", err)
+			}
+			quality = q
+		}
+
+		item := Language{
+			Language: lang,
+			Quality : quality,
+		}
+		items = append(items, item)
+
+		if len(hot.Language) == 0 || item.Quality > hot.Quality {
+			hot = item
+		}
+	}
+
+	return hot.Language, items, nil
 }
