@@ -35,18 +35,18 @@ func (this *IsClass) Mobile(value any) (ok bool) {
 	return regexp.MustCompile(`^1[3456789]\d{9}$`).MatchString(cast.ToString(value))
 }
 
-// Empty - 是否为空
+// Empty - 是否为空 - 全部为空才返回 true
 func (this *IsClass) Empty(args ...any) (ok bool) {
 
-	var empty bool
 	for _, value := range args {
-		_, empty = typeof(value)
-		if !empty { break }
+		if _, empty := typeof(value); !empty {
+			return false
+		}
 	}
 
-	// _, empty := typeof(value)
-	return empty
+	return true
 }
+
 // Domain - 是否为域名
 func (this *IsClass) Domain(domain any) (ok bool) {
 	if domain == nil {
