@@ -36,11 +36,17 @@ func (this *IsClass) Mobile(value any) (ok bool) {
 }
 
 // Empty - 是否为空
-func (this *IsClass) Empty(value any) (ok bool) {
-	_, empty := typeof(value)
+func (this *IsClass) Empty(args ...any) (ok bool) {
+
+	var empty bool
+	for _, value := range args {
+		_, empty = typeof(value)
+		if !empty { break }
+	}
+
+	// _, empty := typeof(value)
 	return empty
 }
-
 // Domain - 是否为域名
 func (this *IsClass) Domain(domain any) (ok bool) {
 	if domain == nil {
