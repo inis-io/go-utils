@@ -98,3 +98,36 @@ func ArrayIntersect[T any](array1, array2 []T) (slice []T) {
 	}
 	return slice
 }
+
+// ArrayPaging - 分页处理
+func ArrayPaging[T any](rows []T, page, limit int) (code int, count int, data []T) {
+
+	// 获取数据的总长度
+	count = len(rows)
+
+	// 计算总页数
+	if count == 0 || limit <= 0 {
+		code = 0
+	} else {
+		code = (count + limit - 1) / limit
+	}
+
+	// 检查页码是否有效
+	if page < 1 {
+		page = 1
+	}
+	if page > code {
+		// 如果页码超过总页数，返回空数据
+		return code, count, []T{}
+	}
+
+	// 计算当前页数据的起始和结束索引
+	start := (page - 1) * limit
+	end := start + limit
+	if end > count { end = count }
+
+	// 截取当前页的数据
+	data = rows[start:end]
+
+	return code, count, data
+}

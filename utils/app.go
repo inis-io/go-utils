@@ -1,15 +1,16 @@
 package utils
 
 func init() {
-	In.Array = InArray[any]
+	In.Array   = InArray[any]
 	Array.Diff = ArrayDiff[any]
 	Array.Intersect = ArrayIntersect[any]
-	Array.Filter = ArrayFilter
-	Array.Remove = ArrayRemove
-	Array.Unique = ArrayUnique[any]
-	Array.Empty = ArrayEmpty[any]
+	Array.Filter  = ArrayFilter
+	Array.Remove  = ArrayRemove
+	Array.Unique  = ArrayUnique[any]
+	Array.Empty   = ArrayEmpty[any]
 	Array.Reverse = ArrayReverse[any]
 	Array.MapWithField = ArrayMapWithField
+	Array.Paging  = ArrayPaging[any]
 	Map.WithField = MapWithField[map[string]any]
 	Map.WithoutField = MapWithoutField[map[string]any]
 	Map.ToURL  = MapToURL
@@ -31,6 +32,7 @@ var Array struct {
 	Empty        func(array []any) (slice []any)
 	Reverse      func(array []any) (slice []any)
 	MapWithField func(array []map[string]any, field any) (slice []any)
+	Paging		 func(rows []any, page, limit int) (code int, count int, data []any)
 }
 
 var Map struct {
