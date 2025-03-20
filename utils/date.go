@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/spf13/cast"
 	"time"
 )
 
@@ -17,16 +18,18 @@ func (this *DateClass) Format(layout string) string {
 }
 
 // FormatSeconds 将秒数格式化为友好的时间字符串
-func (this *DateClass) FormatSeconds(seconds int) string {
+func (this *DateClass) FormatSeconds(seconds any) string {
 
-	if seconds < 60 {
-		return fmt.Sprintf("%d秒", seconds)
+	value := cast.ToInt(seconds)
+
+	if value < 60 {
+		return fmt.Sprintf("%d秒", value)
 	}
 
-	if seconds < 3600 {
+	if value < 3600 {
 
-		minutes := seconds / 60
-		remain  := seconds % 60
+		minutes := value / 60
+		remain  := value % 60
 
 		if remain == 0 {
 			return fmt.Sprintf("%d分钟", minutes)
@@ -37,10 +40,10 @@ func (this *DateClass) FormatSeconds(seconds int) string {
 		return fmt.Sprintf("%d分钟%d秒", minutes, remain)
 	}
 
-	if seconds < 86400 {
+	if value < 86400 {
 
-		hours   := seconds / 3600
-		remain  := seconds % 3600
+		hours   := value / 3600
+		remain  := value % 3600
 		minutes := remain  / 60
 		remain   = remain % 60
 
@@ -61,8 +64,8 @@ func (this *DateClass) FormatSeconds(seconds int) string {
 		return result
 	}
 
-	days   := seconds / 86400
-	remain := seconds % 86400
+	days   := value / 86400
+	remain := value % 86400
 	hours  := remain  / 3600
 
 	remain   = remain % 3600
