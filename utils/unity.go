@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/spf13/cast"
 	"regexp"
+	"strings"
 )
 
 // Unity - 统一规范化
@@ -138,4 +139,22 @@ func (this *UnityClass) Float(value ...any) (array []float64) {
 	}
 
 	return ArrayUnique(array)
+}
+
+// Join - 数组转字符串
+func (this *UnityClass) Join(elems any, unique bool, sep ...string) string {
+
+	// 默认分隔符
+	if len(sep) == 0 { sep = []string{","} }
+
+	rows := cast.ToStringSlice(elems)
+
+	// 去重，去空
+	if unique {
+		rows = ArrayUnique(ArrayEmpty(rows))
+	}
+
+	if len(rows) == 0 { return "" }
+
+	return sep[0] + strings.Join(rows, sep[0]) + sep[0]
 }
