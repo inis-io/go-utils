@@ -1,6 +1,6 @@
 module github.com/inis-io/go-utils
 
-go 1.24.0
+go 1.24.2
 
 require (
 	github.com/json-iterator/go v1.1.12
