@@ -110,6 +110,37 @@ func (this *UnityClass) Int(value ...any) (array []int) {
 	return ArrayUnique(array)
 }
 
+// Int64 参数归一化
+func (this *UnityClass) Int64(value ...any) (array []int64) {
+
+	fn := func(value any) (resp []int64) {
+
+		types := []string{"string", "int", "int64", "float", "float64"}
+
+		if InArray(Get.Type(value), types) {
+			// 正则提取数字部分，包含0
+			item := regexp.MustCompile(`-?\d+`).FindAllString(cast.ToString(value), -1)
+			for _, val := range item {
+				resp = append(resp, cast.ToInt64(val))
+			}
+		}
+
+		if Get.Type(value) == "slice" {
+			item := cast.ToStringSlice(value)
+			for _, val := range item {
+				resp = append(resp, cast.ToInt64(val))
+			}
+		}
+		return resp
+	}
+
+	for _, val := range value {
+		array = append(array, fn(val)...)
+	}
+
+	return ArrayUnique(array)
+}
+
 // Float 参数归一化
 func (this *UnityClass) Float(value ...any) (array []float64) {
 
