@@ -64,12 +64,15 @@ func (this *HashClass) Token(value any, length int) (result string) {
  * 1. number := facade.Hash.Number(6)
  */
 func (this *HashClass) Number(length any) (result string) {
+	
+	// 种子
+	seed   := Hash.Sum32(fmt.Sprintf("%s-%d-%d", Get.Mac(), Get.Pid(), time.Now().UnixNano()))
+	// 使用当前时间戳创建随机数生成器
+	source := rand2.New(rand2.NewSource(cast.ToInt64(seed)))
 
-	// 生成一个随机种子
-	rand2.NewSource(time.Now().UnixNano())
 	// 生成一个随机数
 	for i := 0; i < cast.ToInt(length); i++ {
-		result += fmt.Sprintf("%d", rand2.Intn(10))
+		result += fmt.Sprintf("%d", source.Intn(10))
 	}
 
 	return result
