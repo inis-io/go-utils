@@ -11,7 +11,7 @@ import (
 // Gen - 生成
 var Gen *GenClass
 
-type GenClass struct{}
+type GenClass struct {}
 
 // SerialNo 生成指定前缀和长度的序列号
 /*
