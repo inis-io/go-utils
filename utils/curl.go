@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 // CurlRequest - 发起请求的结构体

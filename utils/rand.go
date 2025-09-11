@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"github.com/spf13/cast"
 	"math/rand"
 	"time"
+	
+	"github.com/spf13/cast"
 )
 
 // Rand - 随机数

@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 var Mime *MimeClass

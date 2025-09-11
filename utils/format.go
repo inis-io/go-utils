@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"sort"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 var Format *FormatClass

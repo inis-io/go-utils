@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
+	
+	"github.com/spf13/cast"
 )
 
 // 读写锁 - 防止并发写入

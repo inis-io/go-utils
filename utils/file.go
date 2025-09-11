@@ -4,13 +4,14 @@ import (
 	"archive/zip"
 	"bufio"
 	"errors"
-	"github.com/spf13/cast"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	
+	"github.com/spf13/cast"
 )
 
 // FileStruct - File 结构体

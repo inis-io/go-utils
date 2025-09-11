@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 // Version - 版本

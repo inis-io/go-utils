@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"regexp"
+	"strings"
+	
 	"github.com/spf13/cast"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"regexp"
-	"strings"
 )
 
 var Cases *CasesClass

@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"reflect"
 	"sync"
+	
+	"github.com/spf13/cast"
 )
 
 type AsyncClass[T any] struct {

@@ -13,10 +13,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
 	"hash/fnv"
 	rand2 "math/rand"
 	"time"
+	
+	"github.com/spf13/cast"
 )
 
 type HashClass struct{}

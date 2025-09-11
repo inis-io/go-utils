@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
-	"github.com/spf13/cast"
 	"net"
 	"os"
 	"strings"
 	"sync"
+	
+	"github.com/spf13/cast"
+	"github.com/spf13/viper"
 )
 
 // Get - 获取
@@ -114,4 +116,23 @@ func (this *GetClass) Pwd() (result string) {
 		return ""
 	}
 	return dir
+}
+
+// Env - 获取环境变量
+func (this *GetClass) Env() (config *any) {
+	
+	// 初始化 Viper
+	viper.SetConfigFile(".env")
+	viper.SetConfigType("env")
+	
+	// 读取配置文件
+	if err := viper.ReadInConfig(); err != nil {
+		return
+	}
+	// 反序列化配置
+	if err := viper.Unmarshal(&config); err != nil {
+		return
+	}
+	
+	return config
 }

@@ -1,12 +1,13 @@
 package utils
 
 import (
-	"github.com/spf13/cast"
 	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 // ForMap - 遍历数组，返回新数组

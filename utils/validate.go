@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
 	"reflect"
 	"strings"
+	
+	"github.com/spf13/cast"
 )
 
 type validator struct {
