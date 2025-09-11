@@ -14,10 +14,12 @@ var Gen *GenClass
 type GenClass struct{}
 
 // SerialNo 生成指定前缀和长度的序列号
-// prefix: 前缀字符串
-// len: 序列号总长度
-// 格式: 前缀 + 日期(8位) + 时间(6位) + 随机数(动态长度)
-// 当指定长度小于前缀+日期+时间的长度时，会截断到指定长度
+/*
+ * prefix: 前缀字符串
+ * len: 序列号总长度
+ * 格式: 前缀 + 日期(8位) + 时间(6位) + 随机数(动态长度)
+ * 当指定长度小于前缀+日期+时间的长度时，会截断到指定长度
+ * */
 func (this *GenClass) SerialNo(prefix any, length int) string {
 	
 	// 种子
