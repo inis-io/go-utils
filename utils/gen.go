@@ -21,7 +21,7 @@ type GenClass struct{}
 func (this *GenClass) SerialNo(prefix any, length int) string {
 	
 	// 种子
-	seed   := Hash.Sum32(fmt.Sprintf("%s-%d-%d", Get.Mac(), Get.Pid(), time.Now().UnixNano()))
+	seed   := Hash.Sum32(fmt.Sprintf("%s-%s-%d-%d", cast.ToString(prefix), Get.Mac(), Get.Pid(), time.Now().UnixNano()))
 	// 使用当前时间戳创建随机数生成器
 	source := rand.New(rand.NewSource(cast.ToInt64(seed)))
 	
@@ -47,14 +47,12 @@ func (this *GenClass) SerialNo(prefix any, length int) string {
 		randomLength := length - fixedLength
 		
 		// 生成指定长度的随机数
-		// 计算10的randomLength次方，作为随机数的上限
-		MAX := 1
-		for i := 0; i < randomLength; i++ {
-			MAX *= 10
-		}
+		// 计算10的 randomLength 次方，作为随机数的上限
+		maxLimit := 1
+		for i := 0; i < randomLength; i++ { maxLimit *= 10 }
 		
 		// 生成随机数并格式化到指定长度
-		randomPart := fmt.Sprintf("%0" + fmt.Sprintf("%dd", randomLength), source.Intn(MAX))
+		randomPart := fmt.Sprintf("%0" + fmt.Sprintf("%dd", randomLength), source.Intn(maxLimit))
 		
 		// 组合所有部分
 		serialNo = fixedPart + randomPart
