@@ -18,7 +18,7 @@ type GenClass struct{}
 // len: 序列号总长度
 // 格式: 前缀 + 日期(8位) + 时间(6位) + 随机数(动态长度)
 // 当指定长度小于前缀+日期+时间的长度时，会截断到指定长度
-func (this *GenClass) SerialNo(prefix string, length int) string {
+func (this *GenClass) SerialNo(prefix any, length int) string {
 	
 	// 种子
 	seed   := Hash.Sum32(fmt.Sprintf("%s-%d-%d", Get.Mac(), Get.Pid(), time.Now().UnixNano()))
@@ -31,7 +31,7 @@ func (this *GenClass) SerialNo(prefix string, length int) string {
 	timePart := now.Format("150405")   // 6位时间
 	
 	// 计算固定部分的总长度
-	fixedPart := prefix + datePart + timePart
+	fixedPart   := cast.ToString(prefix) + datePart + timePart
 	fixedLength := len(fixedPart)
 	
 	var serialNo string
