@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	
+	"github.com/google/uuid"
 	"github.com/spf13/cast"
 )
 
@@ -212,4 +213,9 @@ func (this *GenClass) Domain() string {
 	domain := strings.Join(parts, "") + "." + tlds[source.Intn(len(tlds))]
 	
 	return domain
+}
+
+// UUID 生成UUID字符串
+func (this *GenClass) UUID() string {
+	return uuid.New().String()
 }

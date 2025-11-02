@@ -1,6 +1,6 @@
 module github.com/inis-io/go-utils
 
-go 1.24.2
+go 1.25
 
 require (
 	github.com/json-iterator/go v1.1.12
@@ -13,6 +13,7 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
