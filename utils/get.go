@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	
@@ -135,4 +136,23 @@ func (this *GetClass) Env() (config *any) {
 	}
 	
 	return config
+}
+
+// HostProtocol 使用正则表达式检查地址是否为TLS并返回去除协议头后的内容
+// 输入: 地址字符串(可能包含http://, https://或不包含协议头)
+// 返回: (是否为TLS, 去除协议头后的地址, 错误)
+func (this *GetClass) HostProtocol(url string) (isTLS bool, host string) {
+	
+	// 编译正则表达式，匹配http://或https://开头，并捕获剩余部分
+	item := regexp.MustCompile(`^(?i)(https?://)?(.*)$`)
+	
+	// 查找匹配项
+	matches := item.FindStringSubmatch(url)
+	if len(matches) < 3 { return false, "" }
+	
+	// matches[1]是协议部分(如果有)，matches[2]是主机部分
+	protocol := strings.ToLower(matches[1])
+	
+	// 判断是否为TLS
+	return protocol == "https://", matches[2]
 }
