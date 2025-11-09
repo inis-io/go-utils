@@ -68,6 +68,11 @@ func (this *ViperClass) Read() (result ViperResponse) {
 	if !Is.Empty(this.Name) {
 		item.SetConfigName(this.Name)
 	}
+	
+	// 如果 this.Path 不存在，则创建目录
+	if _, err := os.Stat(this.Path); os.IsNotExist(err) {
+		_ = os.MkdirAll(this.Path, 0755)
+	}
 
 	result.Viper = item
 	result.Error = item.ReadInConfig()
