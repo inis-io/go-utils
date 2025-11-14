@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 	
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -155,4 +156,74 @@ func (this *GetClass) HostProtocol(url string) (isTLS bool, host string) {
 	
 	// 判断是否为TLS
 	return protocol == "https://", matches[2]
+}
+
+// TodayTimestamp - 获取今天开始和结束时间戳
+func (this *GetClass) TodayTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	today  := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	
+	return today.Unix(), today.Add(24 * time.Hour - time.Second).Unix()
+}
+
+// YesterdayTimestamp - 获取昨天开始和结束时间戳
+func (this *GetClass) YesterdayTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	yesterday := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, loc)
+	
+	return yesterday.Unix(), yesterday.Add(24 * time.Hour - time.Second).Unix()
+}
+
+// WeekTimestamp 获取本周开始和结束时间戳
+func (this *GetClass) WeekTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	offset := int(time.Monday - now.Weekday())
+	
+	if offset > 0 { offset = -6 }
+	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, offset)
+	weekEnd   := weekStart.AddDate(0, 0, 6).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	
+	return weekStart.Unix(), weekEnd.Unix()
+}
+
+// LastWeekTimestamp 获取上周开始和结束时间戳
+func (this *GetClass) LastWeekTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	offset := int(time.Monday - now.Weekday())
+	
+	if offset > 0 { offset = -6 }
+	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, offset-7)
+	weekEnd   := weekStart.AddDate(0, 0, 6).Add(23 * time.Hour + 59 * time.Minute + 59 * time.Second)
+	
+	return weekStart.Unix(), weekEnd.Unix()
+}
+
+// MonthTimestamp 获取本月开始和结束时间戳
+func (this *GetClass) MonthTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+	monthEnd   := monthStart.AddDate(0, 1, -1).Add(23 * time.Hour + 59 * time.Minute + 59 * time.Second)
+	
+	return monthStart.Unix(), monthEnd.Unix()
+}
+
+// LastMonthTimestamp 获取上月开始和结束时间戳
+func (this *GetClass) LastMonthTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	monthStart := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, loc)
+	monthEnd   := monthStart.AddDate(0, 1, -1).Add(23 * time.Hour + 59 * time.Minute + 59 * time.Second)
+	
+	return monthStart.Unix(), monthEnd.Unix()
 }

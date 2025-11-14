@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cast"
 )
 
-type HashClass struct{}
+type HashClass struct {}
 
 // Hash - 哈希加密
 var Hash *HashClass
@@ -124,13 +124,13 @@ func (this *AESRequest) Encrypt(text any) (result *AESResponse) {
 	// 每个块的大小
 	blockSize := block.BlockSize()
 	// 计算需要填充的长度
-	padding := blockSize - len([]byte(cast.ToString(text)))%blockSize
+	padding   := blockSize - len([]byte(cast.ToString(text)))%blockSize
 
 	// 填充
-	fill := append([]byte(cast.ToString(text)), bytes.Repeat([]byte{byte(padding)}, padding)...)
+	fill   := append([]byte(cast.ToString(text)), bytes.Repeat([]byte{byte(padding)}, padding)...)
 	encode := make([]byte, len(fill))
 
-	item := cipher.NewCBCEncrypter(block, []byte(this.Iv))
+	item   := cipher.NewCBCEncrypter(block, []byte(this.Iv))
 	item.CryptBlocks(encode, fill)
 
 	result.Byte = encode
@@ -184,7 +184,7 @@ func (this *AESRequest) Decrypt(text any) (result *AESResponse) {
 
 var RSA *RSAClass
 
-type RSAClass struct{}
+type RSAClass struct {}
 
 type RSAResponse struct {
 	// 私钥
@@ -344,4 +344,21 @@ func (this *RSAClass) PrivatePem(key string) (cert string) {
 	if err := pem.Encode(&PEM, block); err != nil { return "" }
 
 	return PEM.String()
+}
+
+type Md5Class struct {}
+
+// Md5 - MD5 加密
+var Md5 *Md5Class
+
+// Encrypt 计算字符串的 MD5 哈希值（返回十六进制字符串）
+func (this *Md5Class) Encrypt(value string) string {
+	// 创建 MD5 哈希对象
+	hash := md5.New()
+	// 写入数据（可以多次调用 Write 累加数据）
+	hash.Write([]byte(value))
+	// 计算哈希值，返回 []byte
+	hashBytes := hash.Sum(nil)
+	// 转为十六进制字符串
+	return hex.EncodeToString(hashBytes)
 }
