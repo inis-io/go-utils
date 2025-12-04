@@ -1,6 +1,7 @@
 package utils
 
 import (
+	HTML "html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -181,4 +182,31 @@ func (this *ParseClass) Domain(value any) (domain string) {
 		return ""
 	}
 	return URL.Hostname()
+}
+
+// HtmlToText - 去除 HTML 标签、解码实体、压缩空白，并按 Unicode 字符截取前 length 个字符
+func (this *ParseClass) HtmlToText(html string, length int) (text string) {
+	
+	// 去掉标签
+	tag := regexp.MustCompile(`(?s)<[^>]*>`)
+	
+	// 替换标签为空字符串
+	content := tag.ReplaceAllString(html, "")
+	// 解码 HTML 实体
+	content  = HTML.UnescapeString(content)
+	
+	// 压缩连续空白为单个空格并去首尾空白
+	space  := regexp.MustCompile(`\s+`)
+	content = strings.TrimSpace(space.ReplaceAllString(content, " "))
+	
+	// length == 0 表示不截断，返回全部过滤后的内容
+	if length == 0 { return content }
+	
+	// 按 rune 截取，避免切断多字节字符
+	runes := []rune(content)
+	
+	if len(runes) <= length { return content }
+	
+	// 超出长度则截取前 n 个字符并追加省略号
+	return string(runes[:length]) + "..."
 }
