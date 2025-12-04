@@ -187,25 +187,44 @@ func (this *ParseClass) Domain(value any) (domain string) {
 // HtmlToText - 去除 HTML 标签、解码实体、压缩空白，并按 Unicode 字符截取前 length 个字符
 func (this *ParseClass) HtmlToText(html string, length int) (text string) {
 	
-	// 去掉标签
+	// 首先把 <br> 和 <br />（不区分大小写）替换为换行符
+	br := regexp.MustCompile(`(?i)<br\s*/?>`)
+	content := br.ReplaceAllString(html, "\n")
+	
+	// 去掉其他标签
 	tag := regexp.MustCompile(`(?s)<[^>]*>`)
+	content = tag.ReplaceAllString(content, "")
 	
-	// 替换标签为空字符串
-	content := tag.ReplaceAllString(html, "")
 	// 解码 HTML 实体
-	content  = HTML.UnescapeString(content)
+	content = HTML.UnescapeString(content)
 	
-	// 压缩连续空白为单个空格并去首尾空白
-	space  := regexp.MustCompile(`\s+`)
-	content = strings.TrimSpace(space.ReplaceAllString(content, " "))
+	// 统一 CRLF -> LF
+	content = strings.ReplaceAll(content, "\r\n", "\n")
+	content = strings.ReplaceAll(content, "\r", "\n")
+	
+	// 压缩连续的空格/制表符为单个空格（保留换行符），并压缩连续换行为单个换行
+	reSpace := regexp.MustCompile(`[ \t]+`)
+	content = reSpace.ReplaceAllString(content, " ")
+	reNewline := regexp.MustCompile(`\n+`)
+	content = reNewline.ReplaceAllString(content, "\n")
+	
+	// 去除每行前后空白并整体 Trim
+	lines := strings.Split(content, "\n")
+	for i := range lines {
+		lines[i] = strings.TrimSpace(lines[i])
+	}
+	content = strings.TrimSpace(strings.Join(lines, "\n"))
 	
 	// length == 0 表示不截断，返回全部过滤后的内容
-	if length == 0 { return content }
+	if length == 0 {
+		return content
+	}
 	
 	// 按 rune 截取，避免切断多字节字符
 	runes := []rune(content)
-	
-	if len(runes) <= length { return content }
+	if len(runes) <= length {
+		return content
+	}
 	
 	// 超出长度则截取前 n 个字符并追加省略号
 	return string(runes[:length]) + "..."
