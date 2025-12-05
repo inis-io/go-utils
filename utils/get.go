@@ -217,6 +217,17 @@ func (this *GetClass) MonthTimestamp() (start int64, end int64) {
 	return monthStart.Unix(), monthEnd.Unix()
 }
 
+// YearTimestamp 获取今年开始和结束时间戳
+func (this *GetClass) YearTimestamp() (start int64, end int64) {
+	
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now    := time.Now().In(loc)
+	yearStart := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc)
+	yearEnd   := time.Date(now.Year(), 12, 31, 23, 59, 59, 0, loc)
+	
+	return yearStart.Unix(), yearEnd.Unix()
+}
+
 // LastMonthTimestamp 获取上月开始和结束时间戳
 func (this *GetClass) LastMonthTimestamp() (start int64, end int64) {
 	
