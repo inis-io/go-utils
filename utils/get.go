@@ -227,3 +227,12 @@ func (this *GetClass) LastMonthTimestamp() (start int64, end int64) {
 	
 	return monthStart.Unix(), monthEnd.Unix()
 }
+
+// GetCharLength - 获取字符串字符长度（支持中文）
+func (this *GetClass) GetCharLength(str string) (length int) {
+	
+	// 将字符串转换为rune切片以支持多字节字符
+	runes := []rune(str)
+	
+	return len(runes)
+}
