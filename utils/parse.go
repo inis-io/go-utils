@@ -185,13 +185,18 @@ func (this *ParseClass) Domain(value any) (domain string) {
 }
 
 // HtmlToText - 去除 HTML 标签、解码实体、压缩空白，并按 Unicode 字符截取前 length 个字符
-func (this *ParseClass) HtmlToText(html string, length int) (text string) {
+func (this *ParseClass) HtmlToText(html string, length int, isLine bool) (text string) {
 	
-	// 首先把 <br> 和 <br />（不区分大小写）替换为换行符
+	// 把 <br> 和 <br />（不区分大小写）替换为换行符
 	br := regexp.MustCompile(`(?i)<br\s*/?>`)
 	content := br.ReplaceAllString(html, "\n")
 	
-	// 去掉其他标签
+	// 把常见的块级元素的起始/结束标签替换为换行符（例如 <p>, <div>, <h1>.. 等）
+	// 这样可以保留它们原本的换行语义
+	block := regexp.MustCompile(`(?i)</?(p|div|h[1-6]|li|ul|ol|blockquote|address|article|section|header|footer|nav|pre|table|tr|td|th|hr)[^>]*>`)
+	content = block.ReplaceAllString(content, "\n")
+	
+	// 去掉剩余的标签
 	tag := regexp.MustCompile(`(?s)<[^>]*>`)
 	content = tag.ReplaceAllString(content, "")
 	
@@ -215,16 +220,17 @@ func (this *ParseClass) HtmlToText(html string, length int) (text string) {
 	}
 	content = strings.TrimSpace(strings.Join(lines, "\n"))
 	
-	// length == 0 表示不截断，返回全部过滤后的内容
-	if length == 0 {
-		return content
+	if !isLine {
+		// 去除所有换行符，变成单行文本
+		content = strings.ReplaceAll(content, "\n", " ")
 	}
+	
+	// length == 0 表示不截断，返回全部过滤后的内容
+	if length == 0 { return content }
 	
 	// 按 rune 截取，避免切断多字节字符
 	runes := []rune(content)
-	if len(runes) <= length {
-		return content
-	}
+	if len(runes) <= length { return content }
 	
 	// 超出长度则截取前 n 个字符并追加省略号
 	return string(runes[:length]) + "..."
