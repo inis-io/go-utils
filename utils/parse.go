@@ -187,31 +187,33 @@ func (this *ParseClass) Domain(value any) (domain string) {
 // HtmlToText - 去除 HTML 标签、解码实体、压缩空白，并按 Unicode 字符截取前 length 个字符
 func (this *ParseClass) HtmlToText(html string, length int, isLine bool) (text string) {
 	
+	// 首先，对HTML实体进行转义，使像&lt; &gt;这样的符号变为实际字符
+	content := HTML.UnescapeString(html)
+	// 将非换行空格规范化为普通空格
+	content  = strings.ReplaceAll(content, "\u00A0", " ")
+	
 	// 把 <br> 和 <br />（不区分大小写）替换为换行符
 	br := regexp.MustCompile(`(?i)<br\s*/?>`)
-	content := br.ReplaceAllString(html, "\n")
+	content = br.ReplaceAllString(content, "\n")
 	
 	// 把常见的块级元素的起始/结束标签替换为换行符（例如 <p>, <div>, <h1>.. 等）
 	// 这样可以保留它们原本的换行语义
-	block := regexp.MustCompile(`(?i)</?(p|div|h[1-6]|li|ul|ol|blockquote|address|article|section|header|footer|nav|pre|table|tr|td|th|hr)[^>]*>`)
+	block  := regexp.MustCompile(`(?i)</?(p|div|h[1-6]|li|ul|ol|blockquote|address|article|section|header|footer|nav|pre|table|tr|td|th|hr)[^>]*>`)
 	content = block.ReplaceAllString(content, "\n")
 	
 	// 去掉剩余的标签
 	tag := regexp.MustCompile(`(?s)<[^>]*>`)
 	content = tag.ReplaceAllString(content, "")
 	
-	// 解码 HTML 实体
-	content = HTML.UnescapeString(content)
-	
 	// 统一 CRLF -> LF
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	content = strings.ReplaceAll(content, "\r", "\n")
 	
 	// 压缩连续的空格/制表符为单个空格（保留换行符），并压缩连续换行为单个换行
-	reSpace := regexp.MustCompile(`[ \t]+`)
-	content = reSpace.ReplaceAllString(content, " ")
+	reSpace   := regexp.MustCompile(`[ \t]+`)
+	content    = reSpace.ReplaceAllString(content, " ")
 	reNewline := regexp.MustCompile(`\n+`)
-	content = reNewline.ReplaceAllString(content, "\n")
+	content    = reNewline.ReplaceAllString(content, "\n")
 	
 	// 去除每行前后空白并整体 Trim
 	lines := strings.Split(content, "\n")
