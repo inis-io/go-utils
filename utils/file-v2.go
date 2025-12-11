@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	
 	"github.com/fsnotify/fsnotify"
@@ -317,11 +318,16 @@ type FileWatcher struct {
 	filePath string
 	callback func(event fsnotify.Event)
 	stopChan chan bool
+	// 防抖相关
+	mu sync.Mutex
+	timer *time.Timer
+	lastEvent fsnotify.Event
+	debounce time.Duration
 }
 
 // Watcher 创建文件监听器
 func(this *FileClass) Watcher(filePath string, callback func(event fsnotify.Event)) (*FileWatcher, error) {
-	
+ 
 	// 创建 fsnotify 监听器
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -354,6 +360,8 @@ func(this *FileClass) Watcher(filePath string, callback func(event fsnotify.Even
 		filePath: absPath,
 		callback: callback,
 		stopChan: make(chan bool),
+		// 默认防抖时间
+		debounce: 200 * time.Millisecond,
 	}, nil
 }
 
@@ -368,7 +376,20 @@ func (this *FileWatcher) Start() {
 				if filepath.Clean(event.Name) == this.filePath {
 					// 过滤掉一些不需要的事件，比如访问事件
 					if event.Op.Has(fsnotify.Write) || event.Op.Has(fsnotify.Remove) || event.Op.Has(fsnotify.Rename) || event.Op.Has(fsnotify.Create) {
-						this.callback(event)
+						// 使用防抖：如果在短时间内收到多个事件，只执行一次回调
+						this.mu.Lock()
+						this.lastEvent = event
+						if this.timer != nil {
+							this.timer.Stop()
+						}
+						// 创建一个新的定时器，定时器触发时调用回调
+						this.timer = time.AfterFunc(this.debounce, func() {
+							this.mu.Lock()
+							ev := this.lastEvent
+							this.mu.Unlock()
+							this.callback(ev)
+						})
+						this.mu.Unlock()
 					}
 				}
 			case _, ok := <- this.watcher.Errors: if !ok { return }
@@ -381,6 +402,9 @@ func (this *FileWatcher) Start() {
 // Stop 停止监听
 func (this *FileWatcher) Stop() {
 	this.stopChan <- true
+	if this.timer != nil {
+		this.timer.Stop()
+	}
 	err := this.watcher.Close()
 	if err != nil { return }
 }
