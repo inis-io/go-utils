@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	HTML "html"
 	"net/url"
 	"regexp"
@@ -255,22 +254,18 @@ func (this *ParseClass) HtmlToTextRetainImg(html string, length int, isLine bool
 	block  := regexp.MustCompile(`(?i)</?(p|div|h[1-6]|li|ul|ol|blockquote|address|article|section|header|footer|nav|pre|table|tr|td|th|hr)[^>]*>`)
 	content = block.ReplaceAllString(content, "\n")
 	
-	// 处理 img 标签：保留并添加/追加 emoji 类
 	imgRegex := regexp.MustCompile(`(?i)<img\b([^>]*)>`)
-	content   = imgRegex.ReplaceAllStringFunc(content, func(imgTag string) string {
-		// 检查是否已有 class 属性
-		classRegex := regexp.MustCompile(`(?i)\bclass\s*=\s*(["'])(.*?)\1`)
+	content = imgRegex.ReplaceAllStringFunc(content, func(imgTag string) string {
+		// 查找 class 属性的值（不使用反向引用）
+		classRegex := regexp.MustCompile(`(?i)\bclass\s*=\s*["']([^"']*)["']`)
 		
 		if match := classRegex.FindStringSubmatch(imgTag); match != nil {
-			// 已有 class 属性
-			quote   := match[1]
-			classes := match[2]
-			
+			classes := match[1]
 			// 检查是否已有 emoji 类
 			if !regexp.MustCompile(`\bemoji\b`).MatchString(classes) {
-				// 追加 emoji 类
 				newClasses := strings.TrimSpace(classes) + " emoji"
-				return classRegex.ReplaceAllString(imgTag, fmt.Sprintf(`class=%s%s%s`, quote, newClasses, quote))
+				// 用统一的双引号替换整个 class 属性
+				return classRegex.ReplaceAllString(imgTag, `class="`+newClasses+`"`)
 			}
 			return imgTag
 		} else {
@@ -283,9 +278,15 @@ func (this *ParseClass) HtmlToTextRetainImg(html string, length int, isLine bool
 		return imgTag
 	})
 	
-	// 去掉除了 img 之外的所有标签
-	tag := regexp.MustCompile(`(?i)<(?!img\b)[^>]*>`)
-	content = tag.ReplaceAllString(content, "")
+	// 去掉除了 img 之外的所有标签（使用回调判断保留 img）
+	tag := regexp.MustCompile(`(?i)<[^>]+>`)
+	content = tag.ReplaceAllStringFunc(content, func(t string) string {
+		lt := strings.ToLower(strings.TrimSpace(t))
+		if strings.HasPrefix(lt, "<img") {
+			return t
+		}
+		return ""
+	})
 	
 	// 统一 CRLF -> LF
 	content = strings.ReplaceAll(content, "\r\n", "\n")
