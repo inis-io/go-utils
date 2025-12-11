@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 	
+	"github.com/fsnotify/fsnotify"
 	"github.com/mholt/archives"
 	"github.com/spf13/afero"
 )
@@ -308,4 +309,78 @@ func(this *FileClass) Read(dest string) (content []byte, err error) {
 // Delete - 删除文件或目录
 func(this *FileClass) Delete(dest string) error {
 	return this.Fs.RemoveAll(dest)
+}
+
+// FileWatcher 文件监听器
+type FileWatcher struct {
+	watcher *fsnotify.Watcher
+	filePath string
+	callback func(event fsnotify.Event)
+	stopChan chan bool
+}
+
+// Watcher 创建文件监听器
+func(this *FileClass) Watcher(filePath string, callback func(event fsnotify.Event)) (*FileWatcher, error) {
+	
+	// 创建 fsnotify 监听器
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("创建文件监听器失败: %w", err)
+	}
+	
+	// 获取文件的绝对路径和目录
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		if err := watcher.Close(); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("获取文件绝对路径失败: %w", err)
+	}
+	
+	// 获取文件所在目录（fsnotify 监听的是目录）
+	dir := filepath.Dir(absPath)
+	
+	// 添加目录到监听列表
+	err = watcher.Add(dir)
+	if err != nil {
+		if err := watcher.Close(); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("添加监听目录失败: %w", err)
+	}
+	
+	return &FileWatcher{
+		watcher : watcher,
+		filePath: absPath,
+		callback: callback,
+		stopChan: make(chan bool),
+	}, nil
+}
+
+// Start 开始监听文件变更
+func (this *FileWatcher) Start() {
+	go func() {
+		for {
+			select {
+			case event, ok := <- this.watcher.Events:
+				if !ok { return }
+				// 只处理目标文件的变更事件
+				if filepath.Clean(event.Name) == this.filePath {
+					// 过滤掉一些不需要的事件，比如访问事件
+					if event.Op.Has(fsnotify.Write) || event.Op.Has(fsnotify.Remove) || event.Op.Has(fsnotify.Rename) || event.Op.Has(fsnotify.Create) {
+						this.callback(event)
+					}
+				}
+			case _, ok := <- this.watcher.Errors: if !ok { return }
+			case <- this.stopChan: return
+			}
+		}
+	}()
+}
+
+// Stop 停止监听
+func (this *FileWatcher) Stop() {
+	this.stopChan <- true
+	err := this.watcher.Close()
+	if err != nil { return }
 }
