@@ -254,29 +254,8 @@ func (this *ParseClass) HtmlToTextRetainImg(html string, length int, isLine bool
 	block  := regexp.MustCompile(`(?i)</?(p|div|h[1-6]|li|ul|ol|blockquote|address|article|section|header|footer|nav|pre|table|tr|td|th|hr)[^>]*>`)
 	content = block.ReplaceAllString(content, "\n")
 	
-	imgRegex := regexp.MustCompile(`(?i)<img\b([^>]*)>`)
-	content = imgRegex.ReplaceAllStringFunc(content, func(imgTag string) string {
-		// 查找 class 属性的值（不使用反向引用）
-		classRegex := regexp.MustCompile(`(?i)\bclass\s*=\s*["']([^"']*)["']`)
-		
-		if match := classRegex.FindStringSubmatch(imgTag); match != nil {
-			classes := match[1]
-			// 检查是否已有 emoji 类
-			if !regexp.MustCompile(`\bemoji\b`).MatchString(classes) {
-				newClasses := strings.TrimSpace(classes) + " emoji"
-				// 用统一的双引号替换整个 class 属性
-				return classRegex.ReplaceAllString(imgTag, `class="`+newClasses+`"`)
-			}
-			return imgTag
-		} else {
-			// 没有 class 属性，添加 class="emoji"
-			endRegex := regexp.MustCompile(`(\s*/?>)`)
-			if endRegex.MatchString(imgTag) {
-				return endRegex.ReplaceAllString(imgTag, ` class="emoji"$1`)
-			}
-		}
-		return imgTag
-	})
+	// 处理 img 标签，添加或追加 emoji 类
+	content = this.ProcessImgTags(content)
 	
 	// 去掉除了 img 之外的所有标签（使用回调判断保留 img）
 	tag := regexp.MustCompile(`(?i)<[^>]+>`)
@@ -323,4 +302,34 @@ func (this *ParseClass) HtmlToTextRetainImg(html string, length int, isLine bool
 	
 	// 超出长度则截取前 n 个字符并追加省略号
 	return string(runes[:length]) + "..."
+}
+
+// ProcessImgTags - 处理 img 标签，添加或追加 emoji 类
+func (this *ParseClass) ProcessImgTags(content string) string {
+	
+	imgRegex := regexp.MustCompile(`(?i)<img\b([^>]*)>`)
+	content = imgRegex.ReplaceAllStringFunc(content, func(imgTag string) string {
+		// 查找 class 属性的值（不使用反向引用）
+		classRegex := regexp.MustCompile(`(?i)\bclass\s*=\s*["']([^"']*)["']`)
+		
+		if match := classRegex.FindStringSubmatch(imgTag); match != nil {
+			classes := match[1]
+			// 检查是否已有 emoji 类
+			if !regexp.MustCompile(`\bemoji\b`).MatchString(classes) {
+				newClasses := strings.TrimSpace(classes) + " emoji"
+				// 用统一的双引号替换整个 class 属性
+				return classRegex.ReplaceAllString(imgTag, `class="`+newClasses+`"`)
+			}
+			return imgTag
+		} else {
+			// 没有 class 属性，添加 class="emoji"
+			endRegex := regexp.MustCompile(`(\s*/?>)`)
+			if endRegex.MatchString(imgTag) {
+				return endRegex.ReplaceAllString(imgTag, ` class="emoji"$1`)
+			}
+		}
+		return imgTag
+	})
+	
+	return content
 }
