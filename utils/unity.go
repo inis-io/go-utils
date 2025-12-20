@@ -71,11 +71,9 @@ func (this *UnityClass) Keys(param any, reg ...any) (keys []any) {
 
 	// 去重 - 去空
 	keys = ArrayUnique(ArrayEmpty(keys))
-
-	// 遍历每一项，去重空格
-	for key, val := range keys {
-		keys[key] = regexp.MustCompile(`\s+`).ReplaceAllString(cast.ToString(val), "")
-	}
+	
+	// 遍历每一项，去除首尾空格
+	for key, val := range keys { keys[key] = strings.TrimSpace(cast.ToString(val)) }
 
 	return keys
 }
