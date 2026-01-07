@@ -128,13 +128,13 @@ func(this *FileClass) AutoExtract(sourceURL, dest string) error {
 // Download - 下载网络压缩包
 func(this *FileClass) Download(url string) (fileName string, body io.ReadCloser, length int64, err error) {
 
-	// 创建带有超时的HTTP客户端
+	// 创建带有超时的 HTTP 客户端
 	client := &http.Client{
 		// 设置较长的超时时间
 		Timeout: 10 * time.Minute,
 	}
 
-	// 创建HTTP请求
+	// 创建 HTTP 请求
 	request, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
 	if err != nil { return "", nil, 0, err }
 
@@ -142,14 +142,14 @@ func(this *FileClass) Download(url string) (fileName string, body io.ReadCloser,
 	resp, err := client.Do(request)
 	if err != nil { return "", nil, 0, err }
 
-	// 检查HTTP状态码
+	// 检查 HTTP 状态码
 	if resp.StatusCode != http.StatusOK {
 		err = resp.Body.Close()
 		if err != nil { return "", nil, 0, err }
 		return "", nil, 0, fmt.Errorf("HTTP请求失败: %s", resp.Status)
 	}
 
-	// 尝试从 URL或响应头中提取文件名
+	// 尝试从 URL 或响应头中提取文件名
 	fileName = filepath.Base(url)
 	if cd := resp.Header.Get("Content-Disposition"); cd != "" {
 		if idx := strings.Index(cd, "filename="); idx != -1 {
