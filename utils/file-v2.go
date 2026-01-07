@@ -149,7 +149,7 @@ func(this *FileClass) Download(url string) (fileName string, body io.ReadCloser,
 		return "", nil, 0, fmt.Errorf("HTTP请求失败: %s", resp.Status)
 	}
 
-	// 尝试从URL或响应头中提取文件名
+	// 尝试从 URL或响应头中提取文件名
 	fileName = filepath.Base(url)
 	if cd := resp.Header.Get("Content-Disposition"); cd != "" {
 		if idx := strings.Index(cd, "filename="); idx != -1 {
@@ -162,30 +162,93 @@ func(this *FileClass) Download(url string) (fileName string, body io.ReadCloser,
 
 // WriteFile - 写入文件内容
 func(this *FileClass) WriteFile(dest string, fileInfo archives.FileInfo) error {
-
-	// 创建目标文件
-	file, err := os.Create(dest)
-	if err != nil { return fmt.Errorf("创建文件失败: %v", err) }
-
-	defer func(file *os.File) { err = file.Close() }(file)
-
-	// 获取文件内容读取器
+	
+	// 确保目标目录存在
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return fmt.Errorf("创建目标目录失败: %v", err)
+	}
+	
+	// 从存档中打开源代码阅读器
 	reader, err := fileInfo.Open()
 	if err != nil { return fmt.Errorf("打开文件内容失败: %v", err) }
-	defer func(reader fs.File) { err = reader.Close() }(reader)
-
-	// 写入文件内容
-	_, err = io.Copy(file, reader)
-	if err != nil { return fmt.Errorf("写入文件内容失败: %v", err) }
-
-	// 设置文件修改时间（可选）
-	if !fileInfo.ModTime().IsZero() {
-		err = os.Chtimes(dest, fileInfo.ModTime(), fileInfo.ModTime())
+	defer func() { _ = reader.Close() }()
+	
+	// 在同一目录下创建一个临时文件，以避免跨设备重命名问题
+	dir := filepath.Dir(dest)
+	tmpFile, err := os.CreateTemp(dir, ".tmp-*")
+	if err != nil {
+		return fmt.Errorf("创建临时文件失败: %v", err)
 	}
-
-	// 设置 755 权限
-	err = os.Chmod(dest, 0755)
-
+	// 如果在此之后有任何操作失败，请删除临时文件
+	tmpName := tmpFile.Name()
+	cleanupTmp := func() { _ = os.Remove(tmpName) }
+	// 确保临时文件已关闭
+	defer func() { _ = tmpFile.Close() }()
+	
+	// 将内容复制到临时文件
+	if _, err = io.Copy(tmpFile, reader); err != nil {
+		cleanupTmp()
+		return fmt.Errorf("写入临时文件失败: %v", err)
+	}
+	
+	// 刷新到磁盘
+	if err = tmpFile.Sync(); err != nil {
+		// 虽非致命，但创下纪录
+		_ = tmpFile.Close()
+		cleanupTmp()
+		return fmt.Errorf("同步临时文件失败: %v", err)
+	}
+	
+	// 重命名前关闭临时文件
+	if err = tmpFile.Close(); err != nil {
+		cleanupTmp()
+		return fmt.Errorf("关闭临时文件失败: %v", err)
+	}
+	
+	// 尝试将临时文件重命名为目标文件（在大多数系统上具有原子性）
+	if err = os.Rename(tmpName, dest); err == nil {
+		// 如果存档提供了权限，则设置权限
+		if mode := fileInfo.Mode(); mode != 0 {
+			_ = os.Chmod(dest, mode)
+		} else {
+			_ = os.Chmod(dest, 0755)
+		}
+		return nil
+	}
+	
+	// 如果重命名失败（例如因为文件正忙），请尝试安全覆盖：打开目标文件并进行复制
+	// 重新打开临时文件进行读取
+	tmpRead, err2 := os.Open(tmpName)
+	if err2 != nil {
+		cleanupTmp()
+		return fmt.Errorf("重命名失败: %v；且打开临时文件失败: %v", err, err2)
+	}
+	defer func() { _ = tmpRead.Close() }()
+	
+	// 尝试打开目标文件进行截断和写入
+	dstFile, err3 := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err3 != nil {
+		cleanupTmp()
+		return fmt.Errorf("重命名失败: %v；且打开目标文件失败: %v", err, err3)
+	}
+	// 从tmp复制到目标位置
+	if _, err = io.Copy(dstFile, tmpRead); err != nil {
+		_ = dstFile.Close()
+		cleanupTmp()
+		return fmt.Errorf("重命名失败: %v；且覆盖目标文件失败: %v", err, err)
+	}
+	_ = dstFile.Close()
+	
+	// 如果存档提供了权限，则设置这些权限
+	if mode := fileInfo.Mode(); mode != 0 {
+		_ = os.Chmod(dest, mode)
+	} else {
+		_ = os.Chmod(dest, 0755)
+	}
+	
+	// 删除临时文件
+	cleanupTmp()
+	
 	return nil
 }
 
