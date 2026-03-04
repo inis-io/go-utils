@@ -66,7 +66,6 @@ func (this *GenClass) SerialNo(prefix any, length int) string {
 }
 
 // SerialDate 生成年月日 + (当天累计毫秒数)的字符串
-/**/
 func (this *GenClass) SerialDate() string {
 	
 	// 1. 获取当前本地时间
