@@ -66,7 +66,13 @@ func (this *GenClass) SerialNo(prefix any, length int) string {
 }
 
 // SerialDate 生成年月日 + (当天累计毫秒数)的字符串
-func (this *GenClass) SerialDate() string {
+/*
+ * prefix: 前缀字符串
+ * length: 结果总长度（包括前缀），如果结果长度超过指定长度，会被截断；如果结果长度不足指定长度，会在累计毫秒数前面补0
+ * 格式: 前缀 + 年月日(8位) + 当天累计毫秒数(8位，固定长度，不足部分前面补0)
+ * 建议：除去前缀部分，长度至少为16位（8位日期 + 8位累计毫秒数），否则可能会导致结果不唯一
+ */
+func (this *GenClass) SerialDate(prefix any, length int) string {
 	
 	// 1. 获取当前本地时间
 	now := time.Now()
@@ -89,7 +95,17 @@ func (this *GenClass) SerialDate() string {
 	// 6. 将累计毫秒数转为字符串，拼接最终结果
 	result := dateStr + elapsedMilliStr
 	
-	return result
+	// 如果总长度超过指定长度，截断到指定长度
+	if length > 0 && len(cast.ToString(prefix) + result) > length {
+		result = result[:length]
+	}
+	// 如果总长度不足指定长度，在 elapsedMilliStr 前面补0，直到达到指定长度
+	if length > 0 && len(cast.ToString(prefix) + result) < length {
+		paddingLength := length - len(cast.ToString(prefix) + result)
+		result = dateStr + fmt.Sprintf("%0*d", paddingLength + 8, elapsedMilli)
+	}
+	// 最终结果 = 前缀 + 年月日 + 累计毫秒数
+	return cast.ToString(prefix) + result
 }
 
 // IP 生成随机公网IP地址
