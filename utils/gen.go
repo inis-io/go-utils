@@ -65,6 +65,34 @@ func (this *GenClass) SerialNo(prefix any, length int) string {
 	return serialNo
 }
 
+// SerialDate 生成年月日 + (当天累计毫秒数)的字符串
+/**/
+func (this *GenClass) SerialDate() string {
+	
+	// 1. 获取当前本地时间
+	now := time.Now()
+	
+	// 2. 构造今天00:00:00的时间对象
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	
+	// 3. 计算当前毫秒戳和今日零点毫秒戳
+	currentMilli := now.UnixNano() / 1e6       // 当前毫秒戳
+	todayStartMilli := todayStart.UnixNano() / 1e6 // 今日零点毫秒戳
+	
+	// 4. 计算当天累计的毫秒数（当前毫秒戳 - 今日零点毫秒戳）
+	elapsedMilli    := currentMilli - todayStartMilli
+	// elapsedMilli 固定长度为 8 位，超过部分会被截断，不足部分前面补0
+	elapsedMilliStr := fmt.Sprintf("%08d", elapsedMilli)
+	
+	// 5. 格式化年月日（例如20260304）
+	dateStr := now.Format("20060102")
+	
+	// 6. 将累计毫秒数转为字符串，拼接最终结果
+	result := dateStr + elapsedMilliStr
+	
+	return result
+}
+
 // IP 生成随机公网IP地址
 // 排除内网、保留地址等非公网IP范围
 func (this *GenClass) IP() string {
