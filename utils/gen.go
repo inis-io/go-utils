@@ -8,6 +8,7 @@ import (
 	
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
+	"github.com/bwmarrin/snowflake"
 )
 
 // Gen - 生成
@@ -106,6 +107,31 @@ func (this *GenClass) SerialDate(prefix any, length int) string {
 	}
 	// 最终结果 = 前缀 + 年月日 + 累计毫秒数
 	return cast.ToString(prefix) + result
+}
+
+// SnowFlakeID 生成雪花ID字符串
+func (this *GenClass) SnowFlakeID(node int64) string {
+	
+	if node < 0 || node > 1023 {
+		fmt.Printf("节点ID必须在0-1023范围内，当前值：%d\n", node)
+		return ""
+	}
+	
+	if node == 0 {
+		// 生成随机节点ID
+		source := rand.New(rand.NewSource(time.Now().UnixNano()))
+		// 0-1023范围内的随机数
+		node   = int64(source.Intn(1024))
+	}
+	
+	// 初始化节点（分布式场景中，每个节点ID唯一，范围0-1023）
+	item, err := snowflake.NewNode(node)
+	if err != nil {
+		// 如果雪花算法初始化失败，回退到普通序列号生成
+		return this.SerialNo(nil, 24)
+	}
+	
+	return item.Generate().String()
 }
 
 // IP 生成随机公网IP地址
