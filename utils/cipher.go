@@ -78,14 +78,6 @@ func (this *HashClass) Number(length any) (result string) {
 	return result
 }
 
-// AESRequest - 请求输入
-type AESRequest struct {
-	// 16位密钥
-	Key string
-	// 16位向量
-	Iv string
-}
-
 // AESResponse - 响应输出
 type AESResponse struct {
 	// 加密后的字节
@@ -96,90 +88,167 @@ type AESResponse struct {
 	Error error
 }
 
+type AesClass struct {
+	Key string
+	Iv  string
+}
+
 // AES - 对称加密
-func AES(key, iv any) *AESRequest {
-	return &AESRequest{
+var AES *AesClass
+
+func (this *AesClass) Client(key, iv any) *AesClass {
+	return &AesClass{
 		Key: cast.ToString(key),
 		Iv:  cast.ToString(iv),
 	}
 }
 
 // Encrypt 加密
-func (this *AESRequest) Encrypt(text any) (result *AESResponse) {
-
+func (this *AesClass) Encrypt(text any) (result *AESResponse) {
+	
 	result = &AESResponse{}
-
+	
 	// 拦截异常
 	defer func() {
 		if r := recover(); r != nil {
 			result.Error = fmt.Errorf("%v", r)
 		}
 	}()
-
+	
 	block, err := aes.NewCipher([]byte(this.Key))
-	if err != nil {
-		result.Error = err
-	}
-
+	// 初始化 AES 块异常
+	if err != nil { result.Error = err }
+	
 	// 每个块的大小
 	blockSize := block.BlockSize()
 	// 计算需要填充的长度
 	padding   := blockSize - len([]byte(cast.ToString(text)))%blockSize
-
+	
 	// 填充
 	fill   := append([]byte(cast.ToString(text)), bytes.Repeat([]byte{byte(padding)}, padding)...)
 	encode := make([]byte, len(fill))
-
+	
 	item   := cipher.NewCBCEncrypter(block, []byte(this.Iv))
 	item.CryptBlocks(encode, fill)
-
+	
 	result.Byte = encode
 	result.Text = base64.StdEncoding.EncodeToString(encode)
-
+	
 	return
 }
 
 // Decrypt 解密
-func (this *AESRequest) Decrypt(text any) (result *AESResponse) {
-
+func (this *AesClass) Decrypt(text any) (result *AESResponse) {
+	
 	result = &AESResponse{}
-
+	
 	// 拦截异常
 	defer func() {
 		if r := recover(); r != nil {
 			result.Error = fmt.Errorf("%v", r)
 		}
 	}()
-
+	
 	newText, err := base64.StdEncoding.DecodeString(cast.ToString(text))
 	if err != nil {
 		result.Error = err
 		return
 	}
-
+	
 	block, err := aes.NewCipher([]byte(this.Key))
 	if err != nil {
 		result.Error = err
 		return
 	}
-
+	
 	// 确保 newText 是 blockSize 的整数倍
 	blockSize := block.BlockSize()
 	if len(newText)%blockSize != 0 {
 		result.Error = errors.New("invalid ciphertext")
 		return
 	}
-
+	
 	decode := make([]byte, len(newText))
 	item := cipher.NewCBCDecrypter(block, []byte(this.Iv))
 	item.CryptBlocks(decode, newText)
-
+	
 	// 去除填充
 	padding := decode[len(decode)-1]
 	result.Byte = decode[:len(decode)-int(padding)]
 	result.Text = string(result.Byte)
-
+	
 	return
+}
+
+// 核心乱序索引表（0-31的乱序排列，可自定义修改，作为拆分/合并的密钥）
+// 注意：拆分和合并必须使用完全相同的索引表，否则无法正确还原
+var shuffleIndex = []int{
+	// 前16个索引（对应第一个16位字符串）
+	5, 18, 2, 27, 11, 8, 30, 15, 1, 22, 7, 29, 14, 20, 9, 4,
+	// 后16个索引（对应第二个16位字符串）
+	17, 0, 25, 12, 24, 19, 3, 28, 6, 21, 10, 13, 23, 7, 16, 31,
+}
+
+// DeKeyIv - 从32位字符串还原 AES 密钥和 IV
+func (this *AesClass) DeKeyIv(ciphertext string) (key, iv string, err error) {
+	// 校验输入长度
+	if len(ciphertext) != 32 {
+		return "", "", fmt.Errorf("输入字符串长度必须为32，实际为%d", len(ciphertext))
+	}
+	
+	// 转换为字节数组（方便按索引取值）
+	sBytes  := []byte(ciphertext)
+	// 初始化两个16位字节数组
+	s1Bytes := make([]byte, 16)
+	s2Bytes := make([]byte, 16)
+	
+	// 按乱序索引表填充第一个16位字符串
+	for i := 0; i < 16; i++ {
+		idx := shuffleIndex[i]
+		s1Bytes[i] = sBytes[idx]
+	}
+	
+	// 按乱序索引表填充第二个16位字符串
+	for i := 0; i < 16; i++ {
+		idx := shuffleIndex[16+i]
+		s2Bytes[i] = sBytes[idx]
+	}
+	
+	// 转换为字符串返回
+	return string(s1Bytes), string(s2Bytes), nil
+}
+
+// EnKeyIv - 还原 AES 密钥和 IV
+func (this *AesClass) EnKeyIv(key, iv string) (ciphertext string, err error) {
+	
+	// 校验输入长度
+	if len(key) != 16 {
+		return "", fmt.Errorf("第一个字符串长度必须为16，实际为%d", len(key))
+	}
+	if len(iv) != 16 {
+		return "", fmt.Errorf("第二个字符串长度必须为16，实际为%d", len(iv))
+	}
+	
+	// 转换为字节数组
+	s1Bytes := []byte(key)
+	s2Bytes := []byte(iv)
+	// 初始化32位原始字节数组
+	originalBytes := make([]byte, 32)
+	
+	// 按乱序索引表还原原始32位字符串
+	// 先还原第一个16位字符串对应的字节
+	for i := 0; i < 16; i++ {
+		idx := shuffleIndex[i]
+		originalBytes[idx] = s1Bytes[i]
+	}
+	// 再还原第二个16位字符串对应的字节
+	for i := 0; i < 16; i++ {
+		idx := shuffleIndex[16+i]
+		originalBytes[idx] = s2Bytes[i]
+	}
+	
+	// 转换为字符串返回
+	return string(originalBytes), nil
 }
 
 var RSA *RSAClass
@@ -203,7 +272,7 @@ type RSAResponse struct {
  * @param bits 位数 1024, 2048, 4096（一般：2048）
  */
 func (this *RSAClass) Generate(bits any) (result *RSAResponse) {
-
+	
 	result = &RSAResponse{}
 
 	private, err := rsa.GenerateKey(rand.Reader, cast.ToInt(bits))
