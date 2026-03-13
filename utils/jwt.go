@@ -5,19 +5,20 @@ import (
 	
 	JWT "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/inis-io/aide/dto"
 )
 
 type JwtClass struct {
 	// 参数
-	Body    JwtBody `json:"body"`
+	Body    dto.JwtBody `json:"body"`
 	// 目标
-	Dest    any     `json:"dest"`
+	Dest    any         `json:"dest"`
 	// 记录配置 Hash 值，用于检测配置文件是否有变化
-	Hash    string  `json:"hash"`
+	Hash    string      `json:"hash"`
 }
 
 var Jwt = &JwtClass{
-	Body: JwtBody{
+	Body: dto.JwtBody{
 		Key: "inis-jwt-key",
 		Issuer : "inis-issuer",
 		Subject: "inis-subject",
@@ -26,7 +27,7 @@ var Jwt = &JwtClass{
 }
 
 // SetBody -
-func (this *JwtClass) SetBody(body JwtBody) *JwtClass {
+func (this *JwtClass) SetBody(body dto.JwtBody) *JwtClass {
 	this.Body = body
 	return this
 }
@@ -43,7 +44,7 @@ func (this *JwtClass) SetHash(hash string) *JwtClass {
 }
 
 // Encode - 创建JWT
-func (this *JwtClass) Encode(data any) (resp JwtResp, err error) {
+func (this *JwtClass) Encode(data any) (resp dto.JwtResp, err error) {
 	
 	type JwtClaims struct {
 		Data  any `json:"data"`
@@ -65,7 +66,7 @@ func (this *JwtClass) Encode(data any) (resp JwtResp, err error) {
 	
 	if err != nil { return resp, err }
 	
-	return JwtResp{
+	return dto.JwtResp{
 		Data : data,
 		Value: value,
 		No: uuid.NewString(),
@@ -74,7 +75,7 @@ func (this *JwtClass) Encode(data any) (resp JwtResp, err error) {
 }
 
 // Decode - 解析JWT
-func (this *JwtClass) Decode(token string) (resp JwtResp, err error) {
+func (this *JwtClass) Decode(token string) (resp dto.JwtResp, err error) {
 	
 	type JwtClaims struct {
 		Data  any `json:"data"`
@@ -108,23 +109,4 @@ func (this *JwtClass) Unmarshal(dest any) *JwtClass {
 // GetExpired - 获取JWT过期时间
 func (this *JwtClass) GetExpired() time.Time {
 	return time.Now().Add(time.Second * time.Duration(this.Body.Expired))
-}
-
-// JwtResp - JWT响应
-type JwtResp struct {
-	No       string   `json:"no"`
-	Value    string   `json:"value"`
-	Data     any      `json:"data"`
-	Expired  int64    `json:"expired"`
-}
-
-type JwtBody struct {
-	// 过期时间（秒）
-	Expired  int64  `json:"expired"`
-	// 颁发者签名
-	Issuer   string `json:"issuer"`
-	// 主题
-	Subject  string `json:"subject"`
-	// 密钥
-	Key 	 string `json:"key"`
 }
