@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 	
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
-	"github.com/bwmarrin/snowflake"
 )
 
 // Gen - 生成
@@ -98,7 +98,7 @@ func (this *GenClass) SerialDate(prefix any, length int) string {
 	
 	// 如果总长度超过指定长度，截断到指定长度
 	if length > 0 && len(cast.ToString(prefix) + result) > length {
-		result = result[:length]
+		result = result[:length - len(cast.ToString(prefix))]
 	}
 	// 如果总长度不足指定长度，在 elapsedMilliStr 前面补0，直到达到指定长度
 	if length > 0 && len(cast.ToString(prefix) + result) < length {
