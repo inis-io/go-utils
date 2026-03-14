@@ -9,8 +9,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-var Cases *CasesClass
-
 type CasesParams struct {
 	// 是否大写
 	IsUpper bool
@@ -21,12 +19,10 @@ type CasesClass struct {
 	Params CasesParams
 }
 
-func init() {
-	Cases = &CasesClass{
-		Params: CasesParams{
-			IsUpper: false,
-		},
-	}
+var Cases = &CasesClass{
+	Params: CasesParams{
+		IsUpper: false,
+	},
 }
 
 // IsUpper 是否大写

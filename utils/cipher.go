@@ -78,16 +78,6 @@ func (this *HashClass) Number(length any) (result string) {
 	return result
 }
 
-// AESResponse - 响应输出
-type AESResponse struct {
-	// 加密后的字节
-	Byte []byte
-	// 加密后的字符串
-	Text string
-	// 错误信息
-	Error error
-}
-
 type AesClass struct {
 	Key string
 	Iv  string
@@ -96,7 +86,7 @@ type AesClass struct {
 // AES - 对称加密
 var AES *AesClass
 
-func (this *AesClass) Client(key, iv any) *AesClass {
+func (this *AesClass) NewAes(key, iv any) *AesClass {
 	return &AesClass{
 		Key: cast.ToString(key),
 		Iv:  cast.ToString(iv),
