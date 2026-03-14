@@ -116,10 +116,7 @@ func (this *EnvClass) TomlAll() (result any) {
 
 	err := viper.ReadInConfig()
 
-	if err != nil {
-		fmt.Println("读取配置文件失败: %v", err)
-		return nil
-	}
+	if err != nil { return nil }
 
 	toml := viper.AllSettings()
 

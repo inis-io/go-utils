@@ -17,6 +17,7 @@ import (
 	rand2 "math/rand"
 	"time"
 	
+	"github.com/inis-io/aide/dto"
 	"github.com/spf13/cast"
 )
 
@@ -94,9 +95,9 @@ func (this *AesClass) NewAes(key, iv any) *AesClass {
 }
 
 // Encrypt 加密
-func (this *AesClass) Encrypt(text any) (result *AESResponse) {
+func (this *AesClass) Encrypt(text any) (result *dto.AesResp) {
 	
-	result = &AESResponse{}
+	result = &dto.AesResp{}
 	
 	// 拦截异常
 	defer func() {
@@ -128,9 +129,9 @@ func (this *AesClass) Encrypt(text any) (result *AESResponse) {
 }
 
 // Decrypt 解密
-func (this *AesClass) Decrypt(text any) (result *AESResponse) {
+func (this *AesClass) Decrypt(text any) (result *dto.AesResp) {
 	
-	result = &AESResponse{}
+	result = &dto.AesResp{}
 	
 	// 拦截异常
 	defer func() {
