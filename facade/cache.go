@@ -38,11 +38,11 @@ facade.CacheInst.Watcher(newConfig)
 
 type CacheClass struct {
 	// 记录配置 Hash 值，用于检测配置文件是否有变化
-	Hash      string
+	Hash      string          `json:"hash"`
 	// 当前缓存配置（由调用方注入）
-	config    dto.CacheConfig
+	Config    dto.CacheConfig `json:"config"`
 	// 是否已经注入过配置
-	hasConfig bool
+	HasConfig bool            `json:"hasConfig"`
 }
 
 // normalizeCacheConfig 统一配置默认值，避免不同项目接入时行为不一致
@@ -88,8 +88,8 @@ func normalizeCacheConfig(config dto.CacheConfig) dto.CacheConfig {
 
 // SetConfig - 注入缓存配置
 func (this *CacheClass) SetConfig(config dto.CacheConfig) *CacheClass {
-	this.config = normalizeCacheConfig(config)
-	this.hasConfig = true
+	this.Config = normalizeCacheConfig(config)
+	this.HasConfig = true
 	return this
 }
 
@@ -100,10 +100,10 @@ func (this *CacheClass) Watcher(config ...dto.CacheConfig) {
 		this.SetConfig(config[0])
 	}
 
-	if !this.hasConfig { return }
+	if !this.HasConfig { return }
 
 	// hash 变化，说明配置有更新
-	if this.Hash != this.config.Hash {
+	if this.Hash != this.Config.Hash {
 		this.Init()
 	}
 }
@@ -115,20 +115,20 @@ func (this *CacheClass) Init(config ...dto.CacheConfig) {
 		this.SetConfig(config[0])
 	}
 
-	if !this.hasConfig {
+	if !this.HasConfig {
 		Cache = nil
 		return
 	}
 
 	// 记录配置 Hash 值
-	this.Hash = this.config.Hash
+	this.Hash = this.Config.Hash
 
-	switch strings.ToLower(this.config.Engine) {
+	switch strings.ToLower(this.Config.Engine) {
 	// Redis 缓存
 	case "redis":
 
 		Redis = &RedisClass{}
-		Redis.Init(this.config.Redis)
+		Redis.Init(this.Config.Redis)
 		FileCache = nil
 
 		Cache = Redis
@@ -137,7 +137,7 @@ func (this *CacheClass) Init(config ...dto.CacheConfig) {
 	case "file":
 
 		FileCache = &FileClass{}
-		FileCache.Init(this.config.File)
+		FileCache.Init(this.Config.File)
 		Redis = nil
 
 		Cache = FileCache
@@ -258,7 +258,7 @@ func (this *RedisClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
 	conf := normalizeCacheConfig(config)
 
-	switch conf.Engine {
+	switch strings.ToLower(conf.Engine) {
 	case "file":
 		cache := &FileClass{}
 		cache.Init(conf.File)
@@ -414,9 +414,7 @@ func (this *RedisClass) Get(key string) (value any) {
 // Set - 设置缓存
 func (this *RedisClass) Set(key string, value any) (ok bool) {
 
-	if utils.Is.Empty(key) {
-		return false
-	}
+	if utils.Is.Empty(key) { return false }
 
 	ctx := context.Background()
 
@@ -831,9 +829,7 @@ func (this *FileClass) Get(key string) (value any) {
 // Set - 设置缓存
 func (this *FileClass) Set(key string, value any) (ok bool) {
 
-	if utils.Is.Empty(key) {
-		return false
-	}
+	if utils.Is.Empty(key) { return false }
 
 	// 创建存储目录
 	_ = os.MkdirAll(this.Root, 0755)
@@ -845,9 +841,8 @@ func (this *FileClass) Set(key string, value any) (ok bool) {
 		"expired": expired,
 		"value":   value,
 	})
-
-	err := this.Write(this.Dest(key), []byte(data))
-	if err != nil {
+	
+	if err := this.Write(this.Dest(key), []byte(data)); err != nil {
 		return false
 	}
 
@@ -960,7 +955,7 @@ func (this *FileClass) Read(dest string) (content []byte, err error) {
 
 	// 读取文件内容
 	content = make([]byte, info.Size())
-	_, err = file.Read(content)
+	_, err  = file.Read(content)
 	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("读取文件内容失败: %w", err)
 	}

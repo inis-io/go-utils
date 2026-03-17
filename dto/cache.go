@@ -3,13 +3,13 @@ package dto
 // CacheConfig - 缓存总配置（由调用方传入）
 type CacheConfig struct {
 	// 配置哈希（可选，不传会自动计算）
-	Hash   string
+	Hash   string `json:"hash"`
 	// 引擎：redis / file
-	Engine string
+	Engine string `json:"engine"`
 	// Redis 配置
-	Redis  CacheRedisConfig
+	Redis  CacheRedisConfig `json:"redis"`
 	// 文件缓存配置
-	File   CacheFileConfig
+	File   CacheFileConfig  `json:"file"`
 }
 
 // CacheRedisConfig - Redis 配置
