@@ -7,7 +7,8 @@ import (
 	"os"
 	"strings"
 	"time"
-
+	
+	"github.com/inis-io/aide/dto"
 	"github.com/inis-io/aide/utils"
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/go-redis/v9/maintnotifications"
@@ -37,43 +38,15 @@ facade.CacheInst.Watcher(newConfig)
 
 type CacheClass struct {
 	// 记录配置 Hash 值，用于检测配置文件是否有变化
-	Hash string
+	Hash      string
 	// 当前缓存配置（由调用方注入）
-	config CacheConfig
+	config    dto.CacheConfig
 	// 是否已经注入过配置
 	hasConfig bool
 }
 
-// CacheConfig - 缓存总配置（由调用方传入）
-type CacheConfig struct {
-	// 配置哈希（可选，不传会自动计算）
-	Hash string
-	// 引擎：redis / file
-	Engine string
-	// Redis 配置
-	Redis CacheRedisConfig
-	// 文件缓存配置
-	File CacheFileConfig
-}
-
-type CacheRedisConfig struct {
-	Host     string
-	Port     int
-	Database int
-	Password string
-	Prefix   string
-	Expired  int64
-}
-
-type CacheFileConfig struct {
-	Prefix  string
-	Expired int64
-	Root    string
-	Suffix  string
-}
-
 // normalizeCacheConfig 统一配置默认值，避免不同项目接入时行为不一致
-func normalizeCacheConfig(config CacheConfig) CacheConfig {
+func normalizeCacheConfig(config dto.CacheConfig) dto.CacheConfig {
 
 	config.Engine = strings.ToLower(strings.TrimSpace(config.Engine))
 	if utils.Is.Empty(config.Engine) {
@@ -114,22 +87,20 @@ func normalizeCacheConfig(config CacheConfig) CacheConfig {
 }
 
 // SetConfig - 注入缓存配置
-func (this *CacheClass) SetConfig(config CacheConfig) *CacheClass {
+func (this *CacheClass) SetConfig(config dto.CacheConfig) *CacheClass {
 	this.config = normalizeCacheConfig(config)
 	this.hasConfig = true
 	return this
 }
 
 // Watcher - 监听器
-func (this *CacheClass) Watcher(config ...CacheConfig) {
+func (this *CacheClass) Watcher(config ...dto.CacheConfig) {
 
 	if len(config) > 0 {
 		this.SetConfig(config[0])
 	}
 
-	if !this.hasConfig {
-		return
-	}
+	if !this.hasConfig { return }
 
 	// hash 变化，说明配置有更新
 	if this.Hash != this.config.Hash {
@@ -138,7 +109,7 @@ func (this *CacheClass) Watcher(config ...CacheConfig) {
 }
 
 // Init 初始化
-func (this *CacheClass) Init(config ...CacheConfig) {
+func (this *CacheClass) Init(config ...dto.CacheConfig) {
 
 	if len(config) > 0 {
 		this.SetConfig(config[0])
@@ -260,7 +231,7 @@ type CacheAPI interface {
 	 */
 	Expired(second any) CacheAPI
 	// NewCache - 新建缓存
-	NewCache(config CacheConfig) CacheAPI
+	NewCache(config dto.CacheConfig) CacheAPI
 }
 
 type CacheBody struct {
@@ -280,27 +251,27 @@ type CacheBody struct {
 type RedisClass struct {
 	Client *redis.Client
 	Body   CacheBody
-	Config CacheRedisConfig
+	Config dto.CacheRedisConfig
 }
 
-func (this *RedisClass) NewCache(config CacheConfig) CacheAPI {
+func (this *RedisClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
-	item := normalizeCacheConfig(config)
+	conf := normalizeCacheConfig(config)
 
-	switch item.Engine {
+	switch conf.Engine {
 	case "file":
 		cache := &FileClass{}
-		cache.Init(item.File)
+		cache.Init(conf.File)
 		return cache
 	default:
 		cache := &RedisClass{}
-		cache.Init(item.Redis)
+		cache.Init(conf.Redis)
 		return cache
 	}
 }
 
 // Init - 初始化 Redis 缓存
-func (this *RedisClass) Init(config CacheRedisConfig) {
+func (this *RedisClass) Init(config dto.CacheRedisConfig) {
 
 	this.Config = config
 
@@ -581,28 +552,29 @@ func (this *RedisClass) DelTags() {
 
 type FileClass struct {
 	// 文件客户端
-	Fs afero.Fs
+	Fs     afero.Fs
 	// 缓存参数
-	Body CacheBody
+	Body   CacheBody
 	// 当前配置
-	Config CacheFileConfig
+	Config dto.CacheFileConfig
 	// 存储目录
-	Root string
+	Root   string
 	// 文件后缀
 	Suffix string
 }
 
-func (this *FileClass) NewCache(config CacheConfig) CacheAPI {
-	item := normalizeCacheConfig(config)
+func (this *FileClass) NewCache(config dto.CacheConfig) CacheAPI {
+	
+	conf := normalizeCacheConfig(config)
 
-	switch item.Engine {
+	switch strings.ToLower(conf.Engine) {
 	case "redis":
 		cache := &RedisClass{}
-		cache.Init(item.Redis)
+		cache.Init(conf.Redis)
 		return cache
 	default:
 		cache := &FileClass{}
-		cache.Init(item.File)
+		cache.Init(conf.File)
 		return cache
 	}
 }
@@ -616,10 +588,11 @@ type FileCacheResp struct {
 }
 
 // Init 初始化 文件缓存
-func (this *FileClass) Init(config CacheFileConfig) {
+func (this *FileClass) Init(config dto.CacheFileConfig) {
+	
 	this.Config = config
 
-	this.Root = this.Config.Root
+	this.Root   = this.Config.Root
 	// 设置文件后缀
 	this.Suffix = this.Config.Suffix
 
@@ -701,7 +674,7 @@ func (this *FileClass) SetTags(key string) {
 	for _, tag := range this.Body.Tags {
 
 		var value []byte
-		var keys []string
+		var keys  []string
 
 		// 文件名
 		name := fmt.Sprintf("%v-%v.%s", this.Body.Prefix, tag, this.Suffix)
@@ -719,12 +692,12 @@ func (this *FileClass) SetTags(key string) {
 
 		// 获取标签下的所有成员
 		read, _ := this.Read(dest)
-		keys = cast.ToStringSlice(utils.Json.Decode(read))
+		keys  = cast.ToStringSlice(utils.Json.Decode(read))
 
 		// 添加新成员
-		keys = append(keys, this.Name(key))
+		keys  = append(keys, this.Name(key))
 		// 去重
-		keys = cast.ToStringSlice(utils.ArrayUnique(keys))
+		keys  = cast.ToStringSlice(utils.ArrayUnique(keys))
 		// 重新设置
 		value = []byte(utils.Json.Encode(keys))
 		// 写入文件
