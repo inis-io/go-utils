@@ -35,7 +35,7 @@ type CacheFileConfig struct {
 	// Prefix  - 前缀
 	Prefix  string `json:"prefix"  comment:"前缀" validate:"alphaDash,max=12" default:"INIS"`
 	// Root    - 文件缓存根目录
-	Root    string `json:"root"    comment:"文件缓存根目录" default:"/runtime/cache"`
+	Root    string `json:"root"    comment:"文件缓存根目录" default:"./runtime/cache"`
 	// Suffix  - 文件后缀
 	Suffix  string `json:"suffix"  comment:"文件后缀" default:"json"`
 }

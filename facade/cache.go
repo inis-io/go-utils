@@ -16,26 +16,13 @@ import (
 	"github.com/spf13/cast"
 )
 
+// CacheInst - 缓存配置控制器实例
 var CacheInst = &CacheClass{}
 
-/*
-facade.CacheInst.Init(facade.CacheConfig{
-	Engine: "file", // or "redis"
-	File: facade.CacheFileConfig{
-		Root:    "./runtime/cache",
-		Prefix:  "cache",
-		Suffix:  "json",
-		Expired: 3600,
-	},
-})
-// 使用
-ok := facade.Cache.Set("k", "v")
-_ = ok
+// init - 包初始化时启用默认缓存（文件缓存）
+func init() { useDefaultCache() }
 
-或者配置变更时：
-facade.CacheInst.Watcher(newConfig)
-*/
-
+// CacheClass - 缓存配置控制器
 type CacheClass struct {
 	// 记录配置 Hash 值，用于检测配置文件是否有变化
 	Hash      string          `json:"hash"`
@@ -47,104 +34,113 @@ type CacheClass struct {
 
 // normalizeCacheConfig 统一配置默认值，避免不同项目接入时行为不一致
 func normalizeCacheConfig(config dto.CacheConfig) dto.CacheConfig {
-
+	
 	config.Engine = strings.ToLower(strings.TrimSpace(config.Engine))
 	if utils.Is.Empty(config.Engine) {
 		config.Engine = "file"
 	}
-
+	if config.Engine != "file" && config.Engine != "redis" {
+		config.Engine = "file"
+	}
+	
 	if utils.Is.Empty(config.Redis.Host) {
 		config.Redis.Host = "127.0.0.1"
 	}
 	if config.Redis.Port <= 0 {
 		config.Redis.Port = 6379
 	}
-	// if config.Redis.Expired <= 0 {
-	// 	config.Redis.Expired = 3600
-	// }
-	if utils.Is.Empty(config.Redis.Prefix) {
-		config.Redis.Prefix = "cache"
+	if config.Redis.Expired <= 0 {
+		config.Redis.Expired = 7200
 	}
-
+	if utils.Is.Empty(config.Redis.Prefix) {
+		config.Redis.Prefix = "INIS"
+	}
+	
 	if utils.Is.Empty(config.File.Root) {
 		config.File.Root = "./runtime/cache"
 	}
 	if utils.Is.Empty(config.File.Suffix) {
 		config.File.Suffix = "json"
 	}
-	// if config.File.Expired <= 0 {
-	// 	config.File.Expired = 3600
-	// }
-	if utils.Is.Empty(config.File.Prefix) {
-		config.File.Prefix = "cache"
+	if config.File.Expired <= 0 {
+		config.File.Expired = 7200
 	}
-
+	if utils.Is.Empty(config.File.Prefix) {
+		config.File.Prefix = "INIS"
+	}
+	
 	if utils.Is.Empty(config.Hash) {
 		config.Hash = utils.Hash.Sum32(utils.Json.Encode(config))
 	}
-
+	
 	return config
 }
 
-// SetConfig - 注入缓存配置
-func (this *CacheClass) SetConfig(config dto.CacheConfig) *CacheClass {
+// defaultCacheConfig - 获取默认缓存配置
+func defaultCacheConfig() dto.CacheConfig {
+	return normalizeCacheConfig(dto.CacheConfig{})
+}
+
+// useDefaultCache - 使用默认配置激活缓存
+func useDefaultCache() {
+	conf := defaultCacheConfig()
+	setActiveCache(conf)
+}
+
+// setActiveCache - 按配置切换当前活动缓存实现
+func setActiveCache(config dto.CacheConfig) {
+	
+	conf := normalizeCacheConfig(config)
+
+	switch conf.Engine {
+	case "redis":
+		Redis = &RedisClass{}
+		Redis.Init(conf.Redis)
+		FileCache = nil
+		Cache = Redis
+	default:
+		FileCache = &FileClass{}
+		FileCache.Init(conf.File)
+		Redis = nil
+		Cache = FileCache
+	}
+}
+
+// setConfig - 注入缓存配置
+func (this *CacheClass) setConfig(config dto.CacheConfig) *CacheClass {
 	this.Config = normalizeCacheConfig(config)
 	this.HasConfig = true
 	return this
 }
 
-// Watcher - 监听器
-func (this *CacheClass) Watcher(config ...dto.CacheConfig) {
-
-	if len(config) > 0 {
-		this.SetConfig(config[0])
-	}
-
+// ReloadIfChanged - 当配置发生变化时重新加载缓存
+func (this *CacheClass) ReloadIfChanged(config ...dto.CacheConfig) {
+	
+	if len(config) > 0 { this.setConfig(config[0]) }
+	
 	if !this.HasConfig { return }
-
+	
 	// hash 变化，说明配置有更新
-	if this.Hash != this.Config.Hash {
-		this.Init()
-	}
+	if this.Hash != this.Config.Hash { this.Init() }
 }
 
 // Init 初始化
 func (this *CacheClass) Init(config ...dto.CacheConfig) {
-
+	
 	if len(config) > 0 {
-		this.SetConfig(config[0])
+		this.setConfig(config[0])
 	}
-
+	
 	if !this.HasConfig {
-		Cache = nil
+		useDefaultCache()
 		return
 	}
-
+	
+	this.Config = normalizeCacheConfig(this.Config)
+	
 	// 记录配置 Hash 值
 	this.Hash = this.Config.Hash
-
-	switch strings.ToLower(this.Config.Engine) {
-	// Redis 缓存
-	case "redis":
-
-		Redis = &RedisClass{}
-		Redis.Init(this.Config.Redis)
-		FileCache = nil
-
-		Cache = Redis
-
-	// File 缓存
-	case "file":
-
-		FileCache = &FileClass{}
-		FileCache.Init(this.Config.File)
-		Redis = nil
-
-		Cache = FileCache
-
-	default:
-		Cache = nil
-	}
+	setActiveCache(this.Config)
 }
 
 // Cache - Cache实例
@@ -154,9 +150,14 @@ func (this *CacheClass) Init(config ...dto.CacheConfig) {
  * cache := facade.Cache.Expire(5 * time.Minute).Set("test", "这是测试")
  */
 var Cache CacheAPI
+
+// Redis - 当前激活的 Redis 缓存实例（当 Engine=redis 时可用）
 var Redis *RedisClass
+
+// FileCache - 当前激活的文件缓存实例（当 Engine=file 时可用）
 var FileCache *FileClass
 
+// CacheAPI - 统一缓存能力接口
 type CacheAPI interface {
 	// Tag
 	/**
@@ -234,6 +235,7 @@ type CacheAPI interface {
 	NewCache(config dto.CacheConfig) CacheAPI
 }
 
+// CacheBody - 链式调用上下文
 type CacheBody struct {
 	// 键集 - \/:*?"<>|
 	Keys []string
@@ -245,6 +247,23 @@ type CacheBody struct {
 	Expired time.Duration
 }
 
+// cloneStrings - 克隆字符串切片，避免共享底层数组
+func cloneStrings(values []string) []string {
+	
+	if len(values) == 0 { return nil }
+
+	clone := make([]string, len(values))
+	copy(clone, values)
+	return clone
+}
+
+// cloneCacheBody - 克隆缓存上下文，避免链式调用串状态
+func cloneCacheBody(body CacheBody) CacheBody {
+	body.Keys = cloneStrings(body.Keys)
+	body.Tags = cloneStrings(body.Tags)
+	return body
+}
+
 // ==================== Redis 缓存 ====================
 
 // RedisClass - Redis缓存
@@ -254,10 +273,21 @@ type RedisClass struct {
 	Config dto.CacheRedisConfig
 }
 
+// clone - 克隆 Redis 缓存实例（共享 client，隔离链式上下文）
+func (this *RedisClass) clone() *RedisClass {
+	
+	if this == nil { return nil }
+
+	clone := *this
+	clone.Body = cloneCacheBody(this.Body)
+	return &clone
+}
+
+// NewCache - 按配置创建新的缓存实例
 func (this *RedisClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
 	conf := normalizeCacheConfig(config)
-
+	
 	switch strings.ToLower(conf.Engine) {
 	case "file":
 		cache := &FileClass{}
@@ -272,9 +302,9 @@ func (this *RedisClass) NewCache(config dto.CacheConfig) CacheAPI {
 
 // Init - 初始化 Redis 缓存
 func (this *RedisClass) Init(config dto.CacheRedisConfig) {
-
+	
 	this.Config = config
-
+	
 	prefix := this.Config.Prefix
 	if !utils.Is.Empty(prefix) {
 		this.Body.Prefix = prefix
@@ -294,147 +324,158 @@ func (this *RedisClass) Init(config dto.CacheRedisConfig) {
 
 // Key - 键
 func (this *RedisClass) Key(key ...string) CacheAPI {
+	cache := this.clone()
 	var keys []string
 	// 把多个标签转换为数组
 	for _, value := range key {
-		keys = append(keys, this.Name(value))
+		keys = append(keys, cache.Name(value))
 	}
 	// 合并之前的标签
-	if len(this.Body.Keys) > 0 {
-		keys = append(keys, this.Body.Keys...)
+	if len(cache.Body.Keys) > 0 {
+		keys = append(keys, cache.Body.Keys...)
 	}
 	// 去重
-	this.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
-	return this
+	cache.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
+	return cache
 }
 
 // Keys - 键集
 func (this *RedisClass) Keys(key []string) CacheAPI {
+	cache := this.clone()
 	var keys []string
 	// 把多个标签转换为数组
 	for _, value := range key {
-		keys = append(keys, this.Name(value))
+		keys = append(keys, cache.Name(value))
 	}
 	// 合并之前的标签
-	if len(this.Body.Keys) > 0 {
-		keys = append(keys, this.Body.Keys...)
+	if len(cache.Body.Keys) > 0 {
+		keys = append(keys, cache.Body.Keys...)
 	}
 	// 去重
-	this.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
-	return this
+	cache.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
+	return cache
 }
 
 // Tag - 标签
 func (this *RedisClass) Tag(tag ...string) CacheAPI {
+	cache := this.clone()
 	var tags []string
 	// 把多个标签转换为数组
 	for _, value := range tag {
 		tags = append(tags, strings.ToUpper(fmt.Sprintf("tag-%v", value)))
 	}
 	// 合并之前的标签
-	if len(this.Body.Tags) > 0 {
-		tags = append(tags, this.Body.Tags...)
+	if len(cache.Body.Tags) > 0 {
+		tags = append(tags, cache.Body.Tags...)
 	}
 	// 去重
-	this.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
-	return this
+	cache.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
+	return cache
 }
 
 // Tags - 标签
 func (this *RedisClass) Tags(tag []string) CacheAPI {
+	cache := this.clone()
 	var tags []string
 	// 把多个标签转换为数组
 	for _, value := range tag {
 		tags = append(tags, strings.ToUpper(fmt.Sprintf("tag-%v", value)))
 	}
 	// 合并之前的标签
-	if len(this.Body.Tags) > 0 {
-		tags = append(tags, this.Body.Tags...)
+	if len(cache.Body.Tags) > 0 {
+		tags = append(tags, cache.Body.Tags...)
 	}
 	// 去重
-	this.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
-	return this
+	cache.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
+	return cache
 }
 
 // Expired - 过期时间
 func (this *RedisClass) Expired(second any) CacheAPI {
-
+	
+	cache := this.clone()
+	
 	// 判断 second 是否为 time.Duration 类型或可解析为 duration 字符串
 	switch v := second.(type) {
 	case time.Duration:
-		this.Body.Expired = v
+		cache.Body.Expired = v
 	case string:
 		// 尝试解析为 duration 字符串（例如 `5s`, `1m`）
 		if d, err := time.ParseDuration(v); err == nil {
-			this.Body.Expired = d
+			cache.Body.Expired = d
 		} else if i := cast.ToInt64(v); i > 0 {
-			this.Body.Expired = time.Duration(i) * time.Second
+			cache.Body.Expired = time.Duration(i) * time.Second
 		} else {
-			this.Body.Expired = cast.ToDuration(v)
+			cache.Body.Expired = cast.ToDuration(v)
 		}
 	default:
 		// 对于数值类型，按秒处理；对于其他类型，尽量转换为 duration
 		if cast.ToInt64(second) > 0 {
-			this.Body.Expired = time.Duration(cast.ToInt64(second)) * time.Second
+			cache.Body.Expired = time.Duration(cast.ToInt64(second)) * time.Second
 		} else {
-			this.Body.Expired = cast.ToDuration(second)
+			cache.Body.Expired = cast.ToDuration(second)
 		}
 	}
-
-	return this
+	
+	return cache
 }
 
 // Has - 判断缓存是否存在
 func (this *RedisClass) Has(key string) (ok bool) {
-
+	
 	if utils.Is.Empty(key) {
 		return false
 	}
-
+	
 	ctx := context.Background()
-
+	
 	result, err := this.Client.Exists(ctx, this.Name(key)).Result()
 	return utils.Ternary[bool](err != nil, false, result == 1)
 }
 
 // Get - 获取缓存
 func (this *RedisClass) Get(key string) (value any) {
-
+	
 	if utils.Is.Empty(key) {
 		return false
 	}
-
+	
 	ctx := context.Background()
-
+	
 	result, err := this.Client.Get(ctx, this.Name(key)).Result()
-
+	
 	return utils.Ternary[any](err != nil, nil, utils.Json.Decode(result))
 }
 
 // Set - 设置缓存
 func (this *RedisClass) Set(key string, value any) (ok bool) {
-
-	if utils.Is.Empty(key) { return false }
-
+	cache := this.clone()
+	
+	if cache == nil || utils.Is.Empty(key) { return false }
+	
 	ctx := context.Background()
-
+	
 	// 设置缓存
-	err := this.Client.Set(ctx, this.Name(key), utils.Json.Encode(value), this.Body.Expired).Err()
-
+	err := cache.Client.Set(ctx, cache.Name(key), utils.Json.Encode(value), cache.Body.Expired).Err()
+	
 	// 设置标签
-	this.SetTags(key)
+	cache.SetTags(key)
 	// 重置配置
-	this.Reset()
-
+	cache.Reset()
+	
 	return utils.Ternary[bool](err != nil, false, true)
 }
 
 // Delete - 删除缓存
 func (this *RedisClass) Delete(key ...string) (ok bool) {
-
+	cache := this.clone()
+	if cache == nil {
+		return false
+	}
+	
 	var err error
 	ctx := context.Background()
-
+	
 	// // 根据标签删除缓存
 	// if len(this.Body.Tags) > 0 {
 	// 	for _, tag := range this.Body.Tags {
@@ -451,23 +492,25 @@ func (this *RedisClass) Delete(key ...string) (ok bool) {
 	// 		this.Body.Tags = []string{}
 	// 	}
 	// }
-
-	this.Keys(key)
-
+	
+	if cloned, ok := cache.Keys(key).(*RedisClass); ok {
+		cache = cloned
+	}
+	
 	// 根据键集删除缓存
-	_ = this.Client.Del(ctx, this.Body.Keys...).Err()
-
+	_ = cache.Client.Del(ctx, cache.Body.Keys...).Err()
+	
 	// 根据标签删除缓存
-	this.DelTags()
+	cache.DelTags()
 	// 重置配置
-	this.Reset()
-
+	cache.Reset()
+	
 	return utils.Ternary[bool](err != nil, false, true)
 }
 
 // Clear - 清空缓存
 func (this *RedisClass) Clear() (ok bool) {
-
+	
 	ctx := context.Background()
 	err := this.Client.FlushDB(ctx).Err()
 	return utils.Ternary[bool](err != nil, false, true)
@@ -481,23 +524,23 @@ func (this *RedisClass) Name(key any) string {
 
 // Reset - 重置配置 - 辅助方法
 func (this *RedisClass) Reset() {
-	this.Body.Keys = []string{}
-	this.Body.Tags = []string{}
-	this.Expired(this.Config.Expired)
+	this.Body.Keys    = []string{}
+	this.Body.Tags    = []string{}
+	this.Body.Expired = time.Duration(this.Config.Expired) * time.Second
 }
 
 // SetTags - 设置标签 - 辅助方法
 func (this *RedisClass) SetTags(key string) {
-
+	
 	ctx := context.Background()
-
+	
 	for _, tag := range this.Body.Tags {
-
+		
 		var keys []string
-
+		
 		// 文件名
 		name := fmt.Sprintf("%v-%v", this.Body.Prefix, tag)
-
+		
 		// 不存在标签
 		if !this.Has(name) {
 			// 添加新成员
@@ -506,11 +549,11 @@ func (this *RedisClass) SetTags(key string) {
 			_ = this.Client.Set(ctx, name, utils.Json.Encode(keys), 0).Err()
 			continue
 		}
-
+		
 		// 获取标签下的所有成员
 		read, _ := this.Client.Get(ctx, name).Result()
 		keys = cast.ToStringSlice(utils.Json.Decode(read))
-
+		
 		// 添加新成员
 		keys = append(keys, this.Name(key))
 		// 去重
@@ -522,20 +565,20 @@ func (this *RedisClass) SetTags(key string) {
 
 // DelTags - 删除标签
 func (this *RedisClass) DelTags() {
-
+	
 	ctx := context.Background()
-
+	
 	for _, tag := range this.Body.Tags {
-
+		
 		// 文件名
 		name := fmt.Sprintf("%v-%v", this.Body.Prefix, tag)
-
+		
 		ok, _ := this.Client.Exists(ctx, name).Result()
 		// 不存在标签
 		if ok != 1 {
 			continue
 		}
-
+		
 		// 获取标签下的所有成员
 		read, _ := this.Client.Get(ctx, name).Result()
 		keys := cast.ToStringSlice(utils.Json.Decode(read))
@@ -548,6 +591,7 @@ func (this *RedisClass) DelTags() {
 
 // ============================ 文件缓存 ============================
 
+// FileClass - 文件缓存实现
 type FileClass struct {
 	// 文件客户端
 	Fs     afero.Fs
@@ -561,10 +605,21 @@ type FileClass struct {
 	Suffix string
 }
 
+// clone - 克隆文件缓存实例（共享文件系统对象，隔离链式上下文）
+func (this *FileClass) clone() *FileClass {
+	
+	if this == nil { return nil }
+
+	clone := *this
+	clone.Body = cloneCacheBody(this.Body)
+	return &clone
+}
+
+// NewCache - 按配置创建新的缓存实例
 func (this *FileClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
 	conf := normalizeCacheConfig(config)
-
+	
 	switch strings.ToLower(conf.Engine) {
 	case "redis":
 		cache := &RedisClass{}
@@ -589,96 +644,100 @@ type FileCacheResp struct {
 func (this *FileClass) Init(config dto.CacheFileConfig) {
 	
 	this.Config = config
-
+	
 	this.Root   = this.Config.Root
 	// 设置文件后缀
 	this.Suffix = this.Config.Suffix
-
+	
 	prefix := this.Config.Prefix
 	if !utils.Is.Empty(prefix) {
 		this.Body.Prefix = fmt.Sprintf("%v", prefix)
 	}
-
+	
 	this.Fs = afero.NewOsFs()
 	this.Body.Expired = time.Duration(this.Config.Expired) * time.Second
 }
 
 // Key - 键
 func (this *FileClass) Key(key ...string) CacheAPI {
+	cache := this.clone()
 	var keys []string
 	// 把多个标签转换为数组
 	for _, value := range key {
-		keys = append(keys, this.Name(value))
+		keys = append(keys, cache.Name(value))
 	}
 	// 合并之前的标签
-	if len(this.Body.Keys) > 0 {
-		keys = append(keys, this.Body.Keys...)
+	if len(cache.Body.Keys) > 0 {
+		keys = append(keys, cache.Body.Keys...)
 	}
 	// 去重
-	this.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
-	return this
+	cache.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
+	return cache
 }
 
 // Keys - 键集
 func (this *FileClass) Keys(key []string) CacheAPI {
+	cache := this.clone()
 	var keys []string
 	// 把多个标签转换为数组
 	for _, value := range key {
-		keys = append(keys, this.Name(value))
+		keys = append(keys, cache.Name(value))
 	}
 	// 合并之前的标签
-	if len(this.Body.Keys) > 0 {
-		keys = append(keys, this.Body.Keys...)
+	if len(cache.Body.Keys) > 0 {
+		keys = append(keys, cache.Body.Keys...)
 	}
 	// 去重
-	this.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
-	return this
+	cache.Body.Keys = cast.ToStringSlice(utils.ArrayUnique(keys))
+	return cache
 }
 
 // Tag - 标签
 func (this *FileClass) Tag(tag ...string) CacheAPI {
+	cache := this.clone()
 	var tags []string
 	// 把多个标签转换为数组
 	for _, value := range tag {
 		tags = append(tags, strings.ToUpper(fmt.Sprintf("tag-%v", value)))
 	}
 	// 合并之前的标签
-	if len(this.Body.Tags) > 0 {
-		tags = append(tags, this.Body.Tags...)
+	if len(cache.Body.Tags) > 0 {
+		tags = append(tags, cache.Body.Tags...)
 	}
 	// 去重
-	this.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
-	return this
+	cache.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
+	return cache
 }
 
 // Tags - 标签
 func (this *FileClass) Tags(tag []string) CacheAPI {
+	cache := this.clone()
 	var tags []string
 	// 把多个标签转换为数组
 	for _, value := range tag {
 		tags = append(tags, strings.ToUpper(fmt.Sprintf("tag-%v", value)))
 	}
 	// 合并之前的标签
-	if len(this.Body.Tags) > 0 {
-		tags = append(tags, this.Body.Tags...)
+	if len(cache.Body.Tags) > 0 {
+		tags = append(tags, cache.Body.Tags...)
 	}
 	// 去重
-	this.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
-	return this
+	cache.Body.Tags = cast.ToStringSlice(utils.ArrayUnique(tags))
+	return cache
 }
 
 // SetTags - 设置标签
 func (this *FileClass) SetTags(key string) {
 	for _, tag := range this.Body.Tags {
-
+		
 		var value []byte
 		var keys  []string
-
+		
 		// 文件名
 		name := fmt.Sprintf("%v-%v.%s", this.Body.Prefix, tag, this.Suffix)
 		// 存储路径
 		dest := fmt.Sprintf("%s/%s", this.Root, name)
-
+		
 		// 不存在标签
 		if !this.Exist(dest) {
 			// 添加新成员
@@ -687,11 +746,11 @@ func (this *FileClass) SetTags(key string) {
 			_ = this.Write(dest, value)
 			continue
 		}
-
+		
 		// 获取标签下的所有成员
 		read, _ := this.Read(dest)
 		keys  = cast.ToStringSlice(utils.Json.Decode(read))
-
+		
 		// 添加新成员
 		keys  = append(keys, this.Name(key))
 		// 去重
@@ -706,17 +765,17 @@ func (this *FileClass) SetTags(key string) {
 // DelTags - 删除标签
 func (this *FileClass) DelTags() {
 	for _, tag := range this.Body.Tags {
-
+		
 		// 文件名
 		name := fmt.Sprintf("%v-%v.%s", this.Body.Prefix, tag, this.Suffix)
 		// 存储路径
 		dest := fmt.Sprintf("%s/%s", this.Root, name)
-
+		
 		// 不存在标签
 		if !this.Exist(dest) {
 			continue
 		}
-
+		
 		// 获取标签下的所有成员
 		read, _ := this.Read(dest)
 		keys := cast.ToStringSlice(utils.Json.Decode(read))
@@ -731,36 +790,37 @@ func (this *FileClass) DelTags() {
 
 // Expired - 过期时间
 func (this *FileClass) Expired(second any) CacheAPI {
-
+	cache := this.clone()
+	
 	// 判断 second 是否为 time.Duration 类型或可解析为 duration 字符串
 	switch v := second.(type) {
 	case time.Duration:
-		this.Body.Expired = v
+		cache.Body.Expired = v
 	case string:
 		// 尝试解析为 duration 字符串（例如 `5s`, `1m`）
 		if d, err := time.ParseDuration(v); err == nil {
-			this.Body.Expired = d
+			cache.Body.Expired = d
 		} else if i := cast.ToInt64(v); i > 0 {
-			this.Body.Expired = time.Duration(i) * time.Second
+			cache.Body.Expired = time.Duration(i) * time.Second
 		} else {
-			this.Body.Expired = cast.ToDuration(v)
+			cache.Body.Expired = cast.ToDuration(v)
 		}
 	default:
 		// 对于数值类型，按秒处理；对于其他类型，尽量转换为 duration
 		if cast.ToInt64(second) > 0 {
-			this.Body.Expired = time.Duration(cast.ToInt64(second)) * time.Second
+			cache.Body.Expired = time.Duration(cast.ToInt64(second)) * time.Second
 		} else {
 			// 一百年
-			this.Body.Expired = cast.ToDuration(100*365*24*60*60) * time.Second
+			cache.Body.Expired = cast.ToDuration(100*365*24*60*60) * time.Second
 		}
 	}
-
-	return this
+	
+	return cache
 }
 
 // Has - 判断缓存是否存在
 func (this *FileClass) Has(key string) (ok bool) {
-
+	
 	// 如果 key 为空，直接返回 false
 	if utils.Is.Empty(key) {
 		return false
@@ -769,106 +829,113 @@ func (this *FileClass) Has(key string) (ok bool) {
 	if !this.Exist(this.Dest(key)) {
 		return false
 	}
-
+	
 	// 读取文件内容
 	data, err := this.Read(this.Dest(key))
 	if err != nil {
 		return false
 	}
-
+	
 	var row FileCacheResp
-
+	
 	_ = utils.Json.Unmarshal(data, &row)
-
+	
 	// 检查缓存是否过期
 	if row.Expired < time.Now().Unix() {
 		// 删除过期缓存
 		_ = this.DeleteFile(this.Dest(key))
 		return false
 	}
-
+	
 	return true
 }
 
 // Get - 获取缓存
 func (this *FileClass) Get(key string) (value any) {
-
+	
 	if utils.Is.Empty(key) {
 		return nil
 	}
-
+	
 	// 获取缓存内容
 	if !this.Has(key) {
 		return nil
 	}
-
+	
 	// 读取文件内容
 	data, err := this.Read(this.Dest(key))
 	if err != nil {
 		return nil
 	}
-
+	
 	var row FileCacheResp
-
+	
 	err = utils.Json.Unmarshal(data, &row)
 	if err != nil {
 		return nil
 	}
-
+	
 	// 检查缓存是否过期
 	if row.Expired < time.Now().Unix() {
 		// 删除过期缓存
 		_ = this.DeleteFile(this.Dest(key))
 		return nil
 	}
-
+	
 	// 返回缓存值
 	return row.Value
 }
 
 // Set - 设置缓存
 func (this *FileClass) Set(key string, value any) (ok bool) {
-
-	if utils.Is.Empty(key) { return false }
-
+	cache := this.clone()
+	
+	if cache == nil || utils.Is.Empty(key) { return false }
+	
 	// 创建存储目录
-	_ = os.MkdirAll(this.Root, 0755)
-
+	_ = os.MkdirAll(cache.Root, 0755)
+	
 	// 过期时间戳
-	expired := time.Now().Add(this.Body.Expired).Unix()
-
+	expired := time.Now().Add(cache.Body.Expired).Unix()
+	
 	data := utils.Json.Encode(map[string]any{
 		"expired": expired,
 		"value":   value,
 	})
 	
-	if err := this.Write(this.Dest(key), []byte(data)); err != nil {
+	if err := cache.Write(cache.Dest(key), []byte(data)); err != nil {
 		return false
 	}
-
+	
 	// 设置标签
-	this.SetTags(key)
+	cache.SetTags(key)
 	// 重置配置
-	this.Reset()
-
+	cache.Reset()
+	
 	return true
 }
 
 // Delete - 删除缓存
 func (this *FileClass) Delete(key ...string) (ok bool) {
-
-	this.Keys(key)
-
-	// 删除缓存
-	for _, value := range this.Body.Keys {
-		_ = this.DeleteFile(fmt.Sprintf("%s/%s", this.Root, value))
+	cache := this.clone()
+	if cache == nil {
+		return false
 	}
-
+	
+	if cloned, ok := cache.Keys(key).(*FileClass); ok {
+		cache = cloned
+	}
+	
+	// 删除缓存
+	for _, value := range cache.Body.Keys {
+		_ = cache.DeleteFile(fmt.Sprintf("%s/%s", cache.Root, value))
+	}
+	
 	// 根据标签删除缓存
-	this.DelTags()
+	cache.DelTags()
 	// 重置配置
-	this.Reset()
-
+	cache.Reset()
+	
 	return true
 }
 
@@ -897,7 +964,7 @@ func (this *FileClass) Dest(key string) string {
 func (this *FileClass) Reset() {
 	this.Body.Keys = []string{}
 	this.Body.Tags = []string{}
-	this.Expired(this.Config.Expired)
+	this.Body.Expired = time.Duration(this.Config.Expired) * time.Second
 }
 
 // Exist 检查文件或目录是否存在 - 辅助方法
@@ -915,51 +982,51 @@ func (this *FileClass) Chmod(dest string, mode int64) {
 
 // CreateFile - 创建文件并写入内容 - 辅助方法
 func (this *FileClass) Write(dest string, content []byte) (err error) {
-
+	
 	// 以写入模式打开文件（若不存在则创建，存在则覆盖）
 	file, err := this.Fs.Create(dest)
-
+	
 	if err != nil {
 		return fmt.Errorf("创建文件失败: %w", err)
 	}
 	// 延迟关闭文件
 	defer func(file afero.File) { err = file.Close() }(file)
-
+	
 	// 写入内容到文件
 	_, err = file.Write(content)
 	if err != nil {
 		return fmt.Errorf("写入文件内容失败: %w", err)
 	}
-
+	
 	// 设置文件权限为 755
 	err = this.Fs.Chmod(dest, 0755)
-
+	
 	return nil
 }
 
 // Read - 读取文件内容 - 辅助方法
 func (this *FileClass) Read(dest string) (content []byte, err error) {
-
+	
 	// 打开指定文件
 	file, err := this.Fs.Open(dest)
 	if err != nil {
 		return nil, fmt.Errorf("打开文件失败: %w", err)
 	}
 	defer func(file afero.File) { err = file.Close() }(file)
-
+	
 	// 获取文件信息
 	info, err := file.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("获取文件信息失败: %w", err)
 	}
-
+	
 	// 读取文件内容
 	content = make([]byte, info.Size())
 	_, err  = file.Read(content)
 	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("读取文件内容失败: %w", err)
 	}
-
+	
 	return content, nil
 }
 
