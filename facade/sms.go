@@ -25,18 +25,18 @@ var SmsInst = &SmsClass{}
 
 type SmsClass struct {
 	// 记录配置 Hash 值，用于检测配置文件是否有变化
-	Hash string `json:"hash"`
+	Hash 	  string        `json:"hash"`
 	// 当前短信配置（由调用方注入）
-	Config dto.SmsConfig `json:"config"`
+	Config    dto.SmsConfig `json:"config"`
 	// 是否已经注入过配置
-	HasConfig bool `json:"hasConfig"`
+	HasConfig bool          `json:"hasConfig"`
 }
 
 func init() { SmsInst.Init() }
 
-// normalizeSmsConfig - 统一配置默认值，避免不同项目接入时行为不一致
-func normalizeSmsConfig(config dto.SmsConfig) dto.SmsConfig {
-	
+// normConfig - 统一配置默认值，避免不同项目接入时行为不一致
+func (this *SmsClass) normConfig(config dto.SmsConfig) dto.SmsConfig {
+
 	config.Engine.Email = strings.ToLower(strings.TrimSpace(config.Engine.Email))
 	if utils.Is.Empty(config.Engine.Email) || config.Engine.Email != "email" {
 		config.Engine.Email = "email"
@@ -82,88 +82,121 @@ func normalizeSmsConfig(config dto.SmsConfig) dto.SmsConfig {
 	return config
 }
 
+// normSmsMode - 统一驱动名称
+func (this *SmsClass) normSmsMode(engine string) string {
+	switch strings.ToLower(strings.TrimSpace(engine)) {
+	case "email", "aliyun", "tencent", "smsbao":
+		return strings.ToLower(strings.TrimSpace(engine))
+	default:
+		return ""
+	}
+}
+
 // defaultSmsConfig - 获取默认短信配置
-func defaultSmsConfig() dto.SmsConfig {
-	return normalizeSmsConfig(dto.SmsConfig{})
+func (this *SmsClass) defaultSmsConfig() dto.SmsConfig {
+	return SmsInst.normConfig(dto.SmsConfig{})
+}
+
+// defaultSmsBody - 获取默认短信上下文
+func (this *SmsClass) defaultSmsBody() dto.SmsBody {
+	return dto.SmsBody{Length: 6, Expired: 5}
+}
+
+// mergeSmsBody - 合并短信上下文
+func (this *SmsClass) mergeSmsBody(current dto.SmsBody, body dto.SmsBody) dto.SmsBody {
+	current.Code = utils.Default(body.Code, current.Code)
+	current.Length = utils.Default(body.Length, current.Length)
+	current.Target = utils.Default(body.Target, current.Target)
+	current.Template = utils.Default(body.Template, current.Template)
+	current.Title = utils.Default(body.Title, current.Title)
+	current.Subject = utils.Default(body.Subject, current.Subject)
+	current.Nickname = utils.Default(body.Nickname, current.Nickname)
+	current.Username = utils.Default(body.Username, current.Username)
+	if body.Expired != 0 {
+		current.Expired = body.Expired
+	}
+	current.Address = utils.Default(body.Address, current.Address)
+	if current.Length <= 0 {
+		current.Length = 6
+	}
+	if current.Expired <= 0 {
+		current.Expired = 5
+	}
+	return current
+}
+
+func (this *SmsClass) NewGoMail(config dto.SmsConfig) *GoMailClass {
+	item := &GoMailClass{Config: SmsInst.normConfig(config)}
+	item.Init()
+	return item
+}
+
+func (this *SmsClass) NewSmsAliYun(config dto.SmsConfig) *SmsAliYunClass {
+	item := &SmsAliYunClass{Config: SmsInst.normConfig(config)}
+	item.Init()
+	return item
+}
+
+func (this *SmsClass) NewSmsTencent(config dto.SmsConfig) *SmsTencentClass {
+	item := &SmsTencentClass{Config: SmsInst.normConfig(config)}
+	item.Init()
+	return item
+}
+
+func (this *SmsClass) NewSmsBao(config dto.SmsConfig) *SmsBaoClass {
+	item := &SmsBaoClass{Config: SmsInst.normConfig(config)}
+	item.Init()
+	return item
 }
 
 // useDefaultSms - 使用默认配置激活短信服务
-func useDefaultSms() {
-	conf := defaultSmsConfig()
-	setActiveSms(conf)
+func (this *SmsClass) useDefaultSms() {
+	conf := SmsInst.defaultSmsConfig()
+	SmsInst.Config = conf
+	SmsInst.Hash = conf.Hash
+	SmsInst.setActiveSms(conf)
 }
 
 // setActiveSms - 按配置切换当前活动短信实现
-func setActiveSms(config dto.SmsConfig) {
-	conf := normalizeSmsConfig(config)
+func (this *SmsClass) setActiveSms(config dto.SmsConfig) {
+	conf := SmsInst.normConfig(config)
+	SmsInst.Config = conf
 
-	GoMail = &GoMailClass{}
-	
-	if strings.ToLower(conf.Engine.Email) == "email" { GoMail.Init() }
+	GoMail = SmsInst.NewGoMail(conf)
 
-	SmsAliYun  = nil
+	SmsAliYun = nil
 	SmsTencent = nil
-	SmsBao     = nil
-	SMS        = GoMail
+	SmsBao = nil
+	SMS = GoMail
 
-	switch strings.ToLower(conf.Engine.SMS) {
+	switch SmsInst.normSmsMode(conf.Engine.SMS) {
 	case "tencent":
-		SmsTencent = &SmsTencentClass{}
-		SmsTencent.Init()
+		SmsTencent = SmsInst.NewSmsTencent(conf)
 	case "smsbao":
-		SmsBao = &SmsBaoClass{}
-		SmsBao.Init()
+		SmsBao = SmsInst.NewSmsBao(conf)
 	default:
-		SmsAliYun = &SmsAliYunClass{}
-		SmsAliYun.Init()
+		SmsAliYun = SmsInst.NewSmsAliYun(conf)
 	}
 }
 
-// NewSMS - 创建SMS实例
-/**
- * @param mode 驱动模式
- * @return SmsAPI
- * @example：
- * 1. sms := facade.NewSMS("email")
- * 2. sms := facade.NewSMS(facade.SMSModeEmail)
- */
-func NewSMS(mode any) SmsAPI {
-	switch strings.ToLower(cast.ToString(mode)) {
-	case "email":
-		SMS = GoMail
+// newWithConfig - 使用传入配置重建短信服务并返回指定驱动
+func (this *SmsClass) newWithConfig(config dto.SmsConfig, engine string) SmsAPI {
+	conf := SmsInst.normConfig(config)
+	switch SmsInst.normSmsMode(engine) {
 	case "aliyun":
-		if SmsAliYun != nil {
-			SMS = SmsAliYun
-		} else {
-			SMS = GoMail
-		}
+		return SmsInst.NewSmsAliYun(conf)
 	case "tencent":
-		if SmsTencent != nil {
-			SMS = SmsTencent
-		} else {
-			SMS = GoMail
-		}
+		return SmsInst.NewSmsTencent(conf)
 	case "smsbao":
-		if SmsBao != nil {
-			SMS = SmsBao
-		} else {
-			SMS = GoMail
-		}
+		return SmsInst.NewSmsBao(conf)
 	default:
-		SMS = GoMail
+		return SmsInst.NewGoMail(conf)
 	}
-	return SMS
-}
-
-// newSMSWithConfig - 使用传入配置重建短信服务并返回指定驱动
-func newSMSWithConfig(config dto.SmsConfig, mode string) SmsAPI {
-	SmsInst.Init(config)
-	return NewSMS(mode)
 }
 
 // setConfig - 注入短信配置
 func (this *SmsClass) setConfig(config dto.SmsConfig) *SmsClass {
-	this.Config = normalizeSmsConfig(config)
+	this.Config = SmsInst.normConfig(config)
 	this.HasConfig = true
 	return this
 }
@@ -171,29 +204,35 @@ func (this *SmsClass) setConfig(config dto.SmsConfig) *SmsClass {
 // ReloadIfChanged - 当配置发生变化时重新加载短信服务
 func (this *SmsClass) ReloadIfChanged(config ...dto.SmsConfig) {
 
-	if len(config) > 0 { this.setConfig(config[0]) }
-
-	if !this.HasConfig { return }
-
-	// hash 变化，说明配置有更新
-	if this.Hash != this.Config.Hash { this.Init() }
-}
-
-// Init 初始化 SMS
-func (this *SmsClass) Init(config ...dto.SmsConfig) {
-	
 	if len(config) > 0 {
 		this.setConfig(config[0])
 	}
 
 	if !this.HasConfig {
-		useDefaultSms()
 		return
 	}
 
-	this.Config = normalizeSmsConfig(this.Config)
+	// hash 变化，说明配置有更新
+	if this.Hash != this.Config.Hash {
+		this.Init()
+	}
+}
+
+// Init 初始化 SMS
+func (this *SmsClass) Init(config ...dto.SmsConfig) {
+
+	if len(config) > 0 {
+		this.setConfig(config[0])
+	}
+
+	if !this.HasConfig {
+		SmsInst.useDefaultSms()
+		return
+	}
+
+	this.Config = SmsInst.normConfig(this.Config)
 	this.Hash = this.Config.Hash
-	setActiveSms(this.Config)
+	SmsInst.setActiveSms(this.Config)
 }
 
 // SMS - SMS实例
@@ -209,12 +248,10 @@ var GoMail = &GoMailClass{}
 
 // SmsAliYun   - 阿里云短信
 var SmsAliYun  *SmsAliYunClass
-
 // SmsTencent  - 腾讯云短信
 var SmsTencent *SmsTencentClass
-
 // SmsBao 	   - 短信宝
-var SmsBao *SmsBaoClass
+var SmsBao     *SmsBaoClass
 
 // SmsAPI - 短信接口
 type SmsAPI interface {
@@ -230,8 +267,8 @@ type SmsAPI interface {
 	Subject(subject string) SmsAPI
 	// SetBody - 设置参数体
 	SetBody(body dto.SmsBody) SmsAPI
-	// NewCache - 新建缓存
-	NewCache(config dto.SmsConfig) SmsAPI
+	// NewSms - 使用配置创建新的短信实例
+	NewSms(config dto.SmsConfig) SmsAPI
 }
 
 // ================================== GoMail邮件服务 - 开始 ==================================
@@ -240,60 +277,100 @@ type SmsAPI interface {
 type GoMailClass struct {
 	// 邮件客户端
 	Client *gomail.Dialer
+	// 配置
+	Config dto.SmsConfig
 	// 参数
-	Body   dto.SmsBody
+	Body dto.SmsBody
+}
+
+// clone - 克隆邮件实例（共享客户端，隔离上下文）
+func (this *GoMailClass) clone() *GoMailClass {
+	if this == nil {
+		return nil
+	}
+	clone := *this
+	return &clone
 }
 
 // Init 初始化 邮件服务
 func (this *GoMailClass) Init() {
-	this.Client = gomail.NewDialer(SmsInst.Config.Email.Host, SmsInst.Config.Email.Port, SmsInst.Config.Email.Account, SmsInst.Config.Email.Password)
+	this.Config = SmsInst.normConfig(this.Config)
+	this.Client = gomail.NewDialer(this.Config.Email.Host, this.Config.Email.Port, this.Config.Email.Account, this.Config.Email.Password)
 	// 确保在STARTTLS/implicit-TLS流程中，TLS握手使用正确的服务器名称。
-	this.Client.TLSConfig = &tls.Config{ServerName: SmsInst.Config.Email.Host}
-	this.SetBody(dto.SmsBody{Length: 6, Expired: 5})
-	this.Body.Template = dto.TempEmailCode
+	this.Client.TLSConfig = &tls.Config{ServerName: this.Config.Email.Host}
+	this.Body   = SmsInst.mergeSmsBody(SmsInst.defaultSmsBody(), this.Body)
+	this.Body.Template = utils.Default(this.Body.Template, dto.TempEmailCode)
 }
 
 // Code - 自定义验证码
 func (this *GoMailClass) Code(code string) SmsAPI {
-	this.Body.Code = code
-	return this
+	mail := this.clone()
+	if mail == nil {
+		return this
+	}
+	mail.Body.Code = code
+	return mail
 }
 
 // Len - 验证码长度
 func (this *GoMailClass) Len(length int) SmsAPI {
-	this.Body.Length = length
-	return this
+	mail := this.clone()
+	if mail == nil {
+		return this
+	}
+	mail.Body.Length = length
+	return mail
 }
 
 // Target - 目标邮箱
 func (this *GoMailClass) Target(target string) SmsAPI {
-	this.Body.Target = target
-	return this
+	mail := this.clone()
+	if mail == nil {
+		return this
+	}
+	mail.Body.Target = target
+	return mail
 }
 
 // Subject - 主题（标题）
 func (this *GoMailClass) Subject(subject string) SmsAPI {
-	this.Body.Subject = subject
-	return this
+	mail := this.clone()
+	if mail == nil {
+		return this
+	}
+	mail.Body.Subject = subject
+	return mail
 }
 
 // Nickname - 昵称（发件人）
 func (this *GoMailClass) Nickname(nickname string) SmsAPI {
-	this.Body.Nickname = nickname
-	return this
+	mail := this.clone()
+	if mail == nil {
+		return this
+	}
+	mail.Body.Nickname = nickname
+	return mail
 }
 
 // Send - 发送验证码
 func (this *GoMailClass) Send(target ...any) (response *dto.SmsResp) {
-
 	response = &dto.SmsResp{}
+	mail := this.clone()
+	if mail == nil {
+		response.Error = errors.New("email client is not initialized")
+		return response
+	}
+	if mail.Client == nil {
+		response.Error = errors.New("email client is not initialized")
+		return response
+	}
 
 	// 这里的 target 是邮箱地址 - 优先级最高
 	if len(target) > 0 {
-		this.Body.Target = cast.ToString(target[0])
+		mail.Body.Target = cast.ToString(target[0])
 	}
 
-	socialType, err := utils.Identify.EmailOrPhone(this.Body.Target)
+	socialType, err := utils.Identify.EmailOrPhone(mail.Body.Target)
 	// 如果不是邮箱或手机号
 	if err != nil {
 		response.Error = err
@@ -301,36 +378,41 @@ func (this *GoMailClass) Send(target ...any) (response *dto.SmsResp) {
 	}
 
 	if socialType == "phone" {
-		return NewSMS(SmsInst.Config.Engine.SMS).Send(this.Body.Target)
+		sender := SmsInst.newWithConfig(mail.Config, mail.Config.Engine.SMS)
+		if sender == nil {
+			response.Error = errors.New("sms sender is not initialized")
+			return response
+		}
+		return sender.SetBody(mail.Body).Send(mail.Body.Target)
 	}
 
 	// 如果自定义验证码为空，则生成一个验证码
-	if utils.Is.Empty(this.Body.Code) {
-		this.Body.Code = utils.Rand.Code(this.Body.Length)
+	if utils.Is.Empty(mail.Body.Code) {
+		mail.Body.Code = utils.Rand.Code(mail.Body.Length)
 	}
 
-	subject := utils.Default(this.Body.Subject, SmsInst.Config.Email.Subject)
-	nickname := utils.Default(this.Body.Nickname, SmsInst.Config.Email.Nickname)
+	subject := utils.Default(mail.Body.Subject, mail.Config.Email.Subject)
+	nickname := utils.Default(mail.Body.Nickname, mail.Config.Email.Nickname)
 
 	item := gomail.NewMessage()
 	// 设置邮件内容类型
 	item.SetHeader("Content-Type", "text/html; charset=UTF-8")
 	// 设置发件人
-	item.SetAddressHeader("From", SmsInst.Config.Email.Account, utils.Default(this.Body.Nickname, SmsInst.Config.Email.Nickname))
+	item.SetAddressHeader("From", mail.Config.Email.Account, utils.Default(mail.Body.Nickname, mail.Config.Email.Nickname))
 	// 发送给多个用户
-	item.SetHeader("To", this.Body.Target)
+	item.SetHeader("To", mail.Body.Target)
 	// 设置邮件主题
 	item.SetHeader("Subject", subject)
 	// 替换验证码
-	temp := utils.Replace(this.Body.Template, map[string]any{
-		"${title}":    this.Body.Title,
-		"${code}":     this.Body.Code,
+	temp := utils.Replace(mail.Body.Template, map[string]any{
+		"${title}":    mail.Body.Title,
+		"${code}":     mail.Body.Code,
 		"${subject}":  subject,
 		"${nickname}": nickname,
-		"${username}": this.Body.Username,
-		"${expired}":  this.Body.Expired,
-		"${email}":    SmsInst.Config.Email.Account,
-		"${address}":  this.Body.Address,
+		"${username}": mail.Body.Username,
+		"${expired}":  mail.Body.Expired,
+		"${email}":    mail.Config.Email.Account,
+		"${address}":  mail.Body.Address,
 		"${year}":     time.Now().Format("2006"),
 	})
 	// 设置邮件正文
@@ -338,7 +420,7 @@ func (this *GoMailClass) Send(target ...any) (response *dto.SmsResp) {
 
 	// 发送邮件
 	// 使用明确的 “拨号 + 发送” 操作，以确保在执行AUTH和MAIL命令之前完成SMTP握手（EHLO/STARTTLS）。
-	sender, err := this.Client.Dial()
+	sender, err := mail.Client.Dial()
 	if err != nil {
 		response.Error = err
 		return response
@@ -349,44 +431,23 @@ func (this *GoMailClass) Send(target ...any) (response *dto.SmsResp) {
 		response.Error = err
 		return response
 	}
-	response.VerifyCode = this.Body.Code
-
-	// 重置参数
-	this.reset()
+	response.VerifyCode = mail.Body.Code
 	return response
 }
 
 // SetBody - 设置参数体
 func (this *GoMailClass) SetBody(body dto.SmsBody) SmsAPI {
-	this.Body.Code = utils.Default(body.Code, this.Body.Code)
-	this.Body.Length = utils.Default(body.Length, this.Body.Length)
-	this.Body.Target = utils.Default(body.Target, this.Body.Target)
-	this.Body.Title = utils.Default(body.Title, this.Body.Title)
-	this.Body.Subject = utils.Default(body.Subject, this.Body.Subject)
-	this.Body.Nickname = utils.Default(body.Nickname, this.Body.Nickname)
-	this.Body.Username = utils.Default(body.Username, this.Body.Username)
-	if body.Expired != 0 {
-		this.Body.Expired = body.Expired
+	mail := this.clone()
+	if mail == nil {
+		return this
 	}
-	this.Body.Address = utils.Default(body.Address, this.Body.Address)
-	return this
+	mail.Body = SmsInst.mergeSmsBody(mail.Body, body)
+	return mail
 }
 
-// NewCache - 使用传入配置创建短信实例
-func (this *GoMailClass) NewCache(config dto.SmsConfig) SmsAPI {
-	return newSMSWithConfig(config, "email")
-}
-
-// 重置参数
-func (this *GoMailClass) reset() {
-	this.Body.Code = ""
-	this.Body.Length = 6
-	this.Body.Target = ""
-	this.Body.Subject = ""
-	this.Body.Nickname = ""
-	this.Body.Username = ""
-	this.Body.Expired = 5
-	this.Body.Address = ""
+// NewSms - 使用传入配置创建短信实例
+func (this *GoMailClass) NewSms(config dto.SmsConfig) SmsAPI {
+	return SmsInst.newWithConfig(config, "email")
 }
 
 // ================================== 阿里云短信 - 开始 ==================================
@@ -394,12 +455,24 @@ func (this *GoMailClass) reset() {
 // SmsAliYunClass - 阿里云短信
 type SmsAliYunClass struct {
 	Client *AliYunSmsApi.Client
+	Config dto.SmsConfig
 	// 短信请求
 	Body dto.SmsBody
 }
 
+// clone - 克隆阿里云短信实例（共享客户端，隔离上下文）
+func (this *SmsAliYunClass) clone() *SmsAliYunClass {
+	if this == nil {
+		return nil
+	}
+	clone := *this
+	return &clone
+}
+
 // Init 初始化 阿里云短信
 func (this *SmsAliYunClass) Init() {
+	this.Config = SmsInst.normConfig(this.Config)
+	this.Body = SmsInst.mergeSmsBody(SmsInst.defaultSmsBody(), this.Body)
 
 	// 创建访问凭证
 	credential, err := AliYunCredential.NewCredential(nil)
@@ -412,11 +485,11 @@ func (this *SmsAliYunClass) Init() {
 	client, err := AliYunSmsApi.NewClient(&AliYunOpenApi.Config{
 		Credential: credential,
 		// 访问的域名 dysmsapi.aliyuncs.com
-		Endpoint: tea.String(utils.Default(SmsInst.Config.AliYun.Endpoint, "dysmsapi.aliyuncs.com")),
+		Endpoint: tea.String(utils.Default(this.Config.AliYun.Endpoint, "dysmsapi.aliyuncs.com")),
 		// 必填，您的 AccessKey ID
-		AccessKeyId: tea.String(SmsInst.Config.AliYun.AccessKeyId),
+		AccessKeyId: tea.String(this.Config.AliYun.AccessKeyId),
 		// 必填，您的 AccessKey Secret
-		AccessKeySecret: tea.String(SmsInst.Config.AliYun.AccessKeySecret),
+		AccessKeySecret: tea.String(this.Config.AliYun.AccessKeySecret),
 	})
 	// 客户端创建失败
 	if err != nil {
@@ -424,7 +497,6 @@ func (this *SmsAliYunClass) Init() {
 	}
 
 	this.Client = client
-	this.SetBody(dto.SmsBody{Length: 6, Expired: 5})
 }
 
 // ApiInfo - 接口信息
@@ -451,118 +523,134 @@ func (this *SmsAliYunClass) ApiInfo() (result *AliYunOpenApi.Params) {
 
 // Code - 自定义验证码
 func (this *SmsAliYunClass) Code(code string) SmsAPI {
-	this.Body.Code = code
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Code = code
+	return sms
 }
 
 // Len - 验证码长度
 func (this *SmsAliYunClass) Len(length int) SmsAPI {
-	this.Body.Length = length
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Length = length
+	return sms
 }
 
 // Target - 目标手机号
 func (this *SmsAliYunClass) Target(target string) SmsAPI {
-	this.Body.Target = target
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Target = target
+	return sms
 }
 
 // Subject - 主题（标题）
 func (this *SmsAliYunClass) Subject(subject string) SmsAPI {
-	this.Body.Subject = subject
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Subject = subject
+	return sms
 }
 
 // Nickname - 昵称（发件人）
 func (this *SmsAliYunClass) Nickname(nickname string) SmsAPI {
-	this.Body.Nickname = nickname
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Nickname = nickname
+	return sms
 }
 
 // Send - 发送验证码
 func (this *SmsAliYunClass) Send(target ...any) (response *dto.SmsResp) {
-
 	response = &dto.SmsResp{}
+	sms := this.clone()
+	if sms == nil {
+		response.Error = errors.New("aliyun sms client is not initialized")
+		return response
+	}
+	if sms.Client == nil {
+		response.Error = errors.New("aliyun sms client is not initialized")
+		return response
+	}
 
 	// 这里的 target 是手机号 - 优先级最高
 	if len(target) > 0 {
-		this.Body.Target = cast.ToString(target[0])
+		sms.Body.Target = cast.ToString(target[0])
 	}
 
 	// 如果不是邮箱或手机号
-	if attr, err := utils.Identify.EmailOrPhone(this.Body.Target); err != nil {
+	if attr, err := utils.Identify.EmailOrPhone(sms.Body.Target); err != nil {
 		response.Error = err
 		return
 	} else if attr == "email" {
-		return NewSMS(SmsInst.Config.Engine.Email).Send(this.Body.Target)
+		sender := SmsInst.newWithConfig(sms.Config, sms.Config.Engine.Email)
+		if sender == nil {
+			response.Error = errors.New("email sender is not initialized")
+			return response
+		}
+		return sender.SetBody(sms.Body).Send(sms.Body.Target)
 	}
 
 	// 如果自定义验证码为空，则生成一个验证码
-	if utils.Is.Empty(this.Body.Code) {
-		this.Body.Code = utils.Rand.Code(this.Body.Length)
+	if utils.Is.Empty(sms.Body.Code) {
+		sms.Body.Code = utils.Rand.Code(sms.Body.Length)
 	}
 
 	params := &AliYunSmsApi.SendSmsRequest{
-		PhoneNumbers: tea.String(this.Body.Target),
-		SignName:     tea.String(SmsInst.Config.AliYun.SignName),
-		TemplateCode: tea.String(SmsInst.Config.AliYun.VerifyCode),
+		PhoneNumbers: tea.String(sms.Body.Target),
+		SignName:     tea.String(sms.Config.AliYun.SignName),
+		TemplateCode: tea.String(sms.Config.AliYun.VerifyCode),
 		TemplateParam: tea.String(utils.Json.Encode(map[string]any{
-			"code": this.Body.Code,
-			"time": this.Body.Expired,
+			"code": sms.Body.Code,
+			"time": sms.Body.Expired,
 		})),
 	}
 
-	resp, err := this.Client.SendSmsWithOptions(params, &AliYunUtilV2.RuntimeOptions{})
+	resp, err := sms.Client.SendSmsWithOptions(params, &AliYunUtilV2.RuntimeOptions{})
 	if err != nil {
 		response.Error = err
 		return response
 	}
+	if resp == nil || resp.Body == nil || resp.Body.Code == nil {
+		response.Error = errors.New("aliyun sms response is nil")
+		return response
+	}
 
 	if strings.ToLower(*resp.Body.Code) != "ok" {
-		response.Error = errors.New(cast.ToString(*resp.Body.Message))
+		response.Error = errors.New(cast.ToString(tea.StringValue(resp.Body.Message)))
 		return response
 	}
 
 	response.Result = cast.ToStringMap(*resp.Body)
 	response.Text = utils.Json.Encode(*resp.Body)
-	response.VerifyCode = this.Body.Code
-
-	// 重置参数
-	this.reset()
+	response.VerifyCode = sms.Body.Code
 	return response
 }
 
 // SetBody - 设置参数体
 func (this *SmsAliYunClass) SetBody(body dto.SmsBody) SmsAPI {
-	this.Body.Code = utils.Default(body.Code, this.Body.Code)
-	this.Body.Length = utils.Default(body.Length, this.Body.Length)
-	this.Body.Target = utils.Default(body.Target, this.Body.Target)
-	this.Body.Title = utils.Default(body.Title, this.Body.Title)
-	this.Body.Subject = utils.Default(body.Subject, this.Body.Subject)
-	this.Body.Nickname = utils.Default(body.Nickname, this.Body.Nickname)
-	this.Body.Username = utils.Default(body.Username, this.Body.Username)
-	if body.Expired != 0 {
-		this.Body.Expired = body.Expired
+	sms := this.clone()
+	if sms == nil {
+		return this
 	}
-	this.Body.Address = utils.Default(body.Address, this.Body.Address)
-	return this
+	sms.Body = SmsInst.mergeSmsBody(sms.Body, body)
+	return sms
 }
 
-// NewCache - 使用传入配置创建短信实例
-func (this *SmsAliYunClass) NewCache(config dto.SmsConfig) SmsAPI {
-	return newSMSWithConfig(config, "aliyun")
-}
-
-// 重置参数
-func (this *SmsAliYunClass) reset() {
-	this.Body.Code = ""
-	this.Body.Length = 6
-	this.Body.Target = ""
-	this.Body.Subject = ""
-	this.Body.Nickname = ""
-	this.Body.Username = ""
-	this.Body.Expired = 5
-	this.Body.Address = ""
+// NewSms - 使用传入配置创建短信实例
+func (this *SmsAliYunClass) NewSms(config dto.SmsConfig) SmsAPI {
+	return SmsInst.newWithConfig(config, "aliyun")
 }
 
 // ================================== 腾讯云短信 - 开始 ==================================
@@ -570,67 +658,108 @@ func (this *SmsAliYunClass) reset() {
 // SmsTencentClass - 腾讯云短信
 type SmsTencentClass struct {
 	Client *TencentCloud.Client
+	Config dto.SmsConfig
 	// 短信请求
 	Body dto.SmsBody
 }
 
+// clone - 克隆腾讯云短信实例（共享客户端，隔离上下文）
+func (this *SmsTencentClass) clone() *SmsTencentClass {
+	if this == nil {
+		return nil
+	}
+	clone := *this
+	return &clone
+}
+
 // Init 初始化 腾讯云短信
 func (this *SmsTencentClass) Init() {
+	this.Config = SmsInst.normConfig(this.Config)
+	this.Body = SmsInst.mergeSmsBody(SmsInst.defaultSmsBody(), this.Body)
 
-	credential := common.NewCredential(SmsInst.Config.Tencent.SecretId, SmsInst.Config.Tencent.SecretKey)
+	credential := common.NewCredential(this.Config.Tencent.SecretId, this.Config.Tencent.SecretKey)
 	clientProfile := profile.NewClientProfile()
 	// sms.tencentcloudapi.com
-	clientProfile.HttpProfile.Endpoint = SmsInst.Config.Tencent.Endpoint
+	clientProfile.HttpProfile.Endpoint = this.Config.Tencent.Endpoint
 	// ap-guangzhou
-	client, err := TencentCloud.NewClient(credential, SmsInst.Config.Tencent.Region, clientProfile)
-	
-	if err != nil { return }
-	
+	client, err := TencentCloud.NewClient(credential, this.Config.Tencent.Region, clientProfile)
+
+	if err != nil {
+		return
+	}
+
 	this.Client = client
-	this.SetBody(dto.SmsBody{Length: 6, Expired: 5})
 }
 
 // Code - 自定义验证码
 func (this *SmsTencentClass) Code(code string) SmsAPI {
-	this.Body.Code = code
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Code = code
+	return sms
 }
 
 // Len - 验证码长度
 func (this *SmsTencentClass) Len(length int) SmsAPI {
-	this.Body.Length = length
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Length = length
+	return sms
 }
 
 // Target - 目标手机号
 func (this *SmsTencentClass) Target(target string) SmsAPI {
-	this.Body.Target = target
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Target = target
+	return sms
 }
 
 // Subject - 主题（标题）
 func (this *SmsTencentClass) Subject(subject string) SmsAPI {
-	this.Body.Subject = subject
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Subject = subject
+	return sms
 }
 
 // Nickname - 昵称（发件人）
 func (this *SmsTencentClass) Nickname(nickname string) SmsAPI {
-	this.Body.Nickname = nickname
-	return this
+	sms := this.clone()
+	if sms == nil {
+		return this
+	}
+	sms.Body.Nickname = nickname
+	return sms
 }
 
 // Send - 发送验证码
 func (this *SmsTencentClass) Send(target ...any) (response *dto.SmsResp) {
-
 	response = &dto.SmsResp{}
+	sms := this.clone()
+	if sms == nil {
+		response.Error = errors.New("tencent sms client is not initialized")
+		return response
+	}
+	if sms.Client == nil {
+		response.Error = errors.New("tencent sms client is not initialized")
+		return response
+	}
 
 	// 这里的 target 是手机号 - 优先级最高
 	if len(target) > 0 {
-		this.Body.Target = cast.ToString(target[0])
+		sms.Body.Target = cast.ToString(target[0])
 	}
 
-	socialType, err := utils.Identify.EmailOrPhone(this.Body.Target)
+	socialType, err := utils.Identify.EmailOrPhone(sms.Body.Target)
 	// 如果不是邮箱或手机号
 	if err != nil {
 		response.Error = err
@@ -638,24 +767,29 @@ func (this *SmsTencentClass) Send(target ...any) (response *dto.SmsResp) {
 	}
 
 	if socialType == "email" {
-		return NewSMS(SmsInst.Config.Engine.Email).Send(this.Body.Target)
+		sender := SmsInst.newWithConfig(sms.Config, sms.Config.Engine.Email)
+		if sender == nil {
+			response.Error = errors.New("email sender is not initialized")
+			return response
+		}
+		return sender.SetBody(sms.Body).Send(sms.Body.Target)
 	}
 
 	// 如果自定义验证码为空，则生成一个验证码
-	if utils.Is.Empty(this.Body.Code) {
-		this.Body.Code = utils.Rand.Code(this.Body.Length)
+	if utils.Is.Empty(sms.Body.Code) {
+		sms.Body.Code = utils.Rand.Code(sms.Body.Length)
 	}
 
 	// 实例化一个请求对象,每个接口都会对应一个request对象
 	request := TencentCloud.NewSendSmsRequest()
 
-	request.PhoneNumberSet = common.StringPtrs([]string{this.Body.Target})
-	request.SmsSdkAppId = common.StringPtr(SmsInst.Config.Tencent.SmsSdkAppId)
-	request.SignName = common.StringPtr(SmsInst.Config.Tencent.SignName)
-	request.TemplateId = common.StringPtr(SmsInst.Config.Tencent.VerifyCode)
-	request.TemplateParamSet = common.StringPtrs([]string{this.Body.Code})
+	request.PhoneNumberSet = common.StringPtrs([]string{sms.Body.Target})
+	request.SmsSdkAppId = common.StringPtr(sms.Config.Tencent.SmsSdkAppId)
+	request.SignName = common.StringPtr(sms.Config.Tencent.SignName)
+	request.TemplateId = common.StringPtr(sms.Config.Tencent.VerifyCode)
+	request.TemplateParamSet = common.StringPtrs([]string{sms.Body.Code})
 
-	item, err := this.Client.SendSms(request)
+	item, err := sms.Client.SendSms(request)
 
 	if err != nil {
 		response.Error = err
@@ -671,52 +805,35 @@ func (this *SmsTencentClass) Send(target ...any) (response *dto.SmsResp) {
 		response.Error = errors.New("response send status set is nil")
 		return response
 	}
+	if item.Response.SendStatusSet[0].Code == nil {
+		response.Error = errors.New("response send status code is nil")
+		return response
+	}
 
 	if *item.Response.SendStatusSet[0].Code != "Ok" {
 		response.Error = errors.New(cast.ToString(item.Response.SendStatusSet[0].Message))
 		return response
 	}
 
-	response.VerifyCode = this.Body.Code
+	response.VerifyCode = sms.Body.Code
 	response.Text = item.ToJsonString()
 	response.Result = utils.Json.Decode(item.ToJsonString())
-
-	// 重置参数
-	this.reset()
 	return response
 }
 
 // SetBody - 设置参数体
 func (this *SmsTencentClass) SetBody(body dto.SmsBody) SmsAPI {
-	this.Body.Code = utils.Default(body.Code, this.Body.Code)
-	this.Body.Length = utils.Default(body.Length, this.Body.Length)
-	this.Body.Target = utils.Default(body.Target, this.Body.Target)
-	this.Body.Title = utils.Default(body.Title, this.Body.Title)
-	this.Body.Subject = utils.Default(body.Subject, this.Body.Subject)
-	this.Body.Nickname = utils.Default(body.Nickname, this.Body.Nickname)
-	this.Body.Username = utils.Default(body.Username, this.Body.Username)
-	if body.Expired != 0 {
-		this.Body.Expired = body.Expired
+	sms := this.clone()
+	if sms == nil {
+		return this
 	}
-	this.Body.Address = utils.Default(body.Address, this.Body.Address)
-	return this
+	sms.Body = SmsInst.mergeSmsBody(sms.Body, body)
+	return sms
 }
 
-// NewCache - 使用传入配置创建短信实例
-func (this *SmsTencentClass) NewCache(config dto.SmsConfig) SmsAPI {
-	return newSMSWithConfig(config, "tencent")
-}
-
-// 重置参数
-func (this *SmsTencentClass) reset() {
-	this.Body.Code = ""
-	this.Body.Length = 6
-	this.Body.Target = ""
-	this.Body.Subject = ""
-	this.Body.Nickname = ""
-	this.Body.Username = ""
-	this.Body.Expired = 5
-	this.Body.Address = ""
+// NewSms - 使用传入配置创建短信实例
+func (this *SmsTencentClass) NewSms(config dto.SmsConfig) SmsAPI {
+	return SmsInst.newWithConfig(config, "tencent")
 }
 
 // ================================== 短信宝 - 开始 ==================================
@@ -731,61 +848,89 @@ type SmsBaoClass struct {
 	SignName string
 	// 接口地址
 	BaseUrl string
+	// 配置
+	Config dto.SmsConfig
 	// 短信请求
 	Body dto.SmsBody
 }
 
+// clone - 克隆短信宝实例（隔离上下文）
+func (this *SmsBaoClass) clone() *SmsBaoClass {
+	if this == nil {
+		return nil
+	}
+	clone := *this
+	return &clone
+}
+
 // Init 初始化 短信宝
 func (this *SmsBaoClass) Init() {
-	this.Account = SmsInst.Config.Smsbao.Account
-	this.ApiKey = SmsInst.Config.Smsbao.ApiKey
-	this.SignName = SmsInst.Config.Smsbao.SignName
-	this.BaseUrl = SmsInst.Config.Smsbao.BaseUrl
-	this.SetBody(dto.SmsBody{Length: 6, Expired: 5})
+	this.Config = SmsInst.normConfig(this.Config)
+	this.Account = this.Config.Smsbao.Account
+	this.ApiKey = this.Config.Smsbao.ApiKey
+	this.SignName = this.Config.Smsbao.SignName
+	this.BaseUrl = this.Config.Smsbao.BaseUrl
+	this.Body = SmsInst.mergeSmsBody(SmsInst.defaultSmsBody(), this.Body)
 	this.Body.Template = fmt.Sprintf("【%s】您的验证码是：${code}，有效期5分钟。（打死也不要把验证码告诉别人）", this.SignName)
 }
 
 // Code - 自定义验证码
 func (this *SmsBaoClass) Code(code string) SmsAPI {
-	this.Body.Code = code
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body.Code = code
+	return sms
 }
 
 // Len - 验证码长度
 func (this *SmsBaoClass) Len(length int) SmsAPI {
-	this.Body.Length = length
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body.Length = length
+	return sms
 }
 
 // Target - 目标手机号
 func (this *SmsBaoClass) Target(target string) SmsAPI {
-	this.Body.Target = target
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body.Target = target
+	return sms
 }
 
 // Subject - 主题（标题）
 func (this *SmsBaoClass) Subject(subject string) SmsAPI {
-	this.Body.Subject = subject
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body.Subject = subject
+	return sms
 }
 
 // Nickname - 昵称（发件人）
 func (this *SmsBaoClass) Nickname(nickname string) SmsAPI {
-	this.Body.Nickname = nickname
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body.Nickname = nickname
+	return sms
 }
 
 // Send - 发送验证码
 func (this *SmsBaoClass) Send(target ...any) (response *dto.SmsResp) {
-
+	
 	response = &dto.SmsResp{}
+	sms := this.clone()
+	
+	if sms == nil {
+		response.Error = errors.New("smsbao sender is not initialized")
+		return response
+	}
 
 	// 这里的 target 是手机号 - 优先级最高
 	if len(target) > 0 {
-		this.Body.Target = cast.ToString(target[0])
+		sms.Body.Target = cast.ToString(target[0])
 	}
 
-	socialType, err := utils.Identify.EmailOrPhone(this.Body.Target)
+	socialType, err := utils.Identify.EmailOrPhone(sms.Body.Target)
 	// 如果不是邮箱或手机号
 	if err != nil {
 		response.Error = err
@@ -793,33 +938,38 @@ func (this *SmsBaoClass) Send(target ...any) (response *dto.SmsResp) {
 	}
 
 	if socialType == "email" {
-		return NewSMS(SmsInst.Config.Engine.Email).Send(this.Body.Target)
+		sender := SmsInst.newWithConfig(sms.Config, sms.Config.Engine.Email)
+		if sender == nil {
+			response.Error = errors.New("email sender is not initialized")
+			return response
+		}
+		return sender.SetBody(sms.Body).Send(sms.Body.Target)
 	}
 
 	// 如果自定义验证码为空，则生成一个验证码
-	if utils.Is.Empty(this.Body.Code) {
-		this.Body.Code = utils.Rand.Code(this.Body.Length)
+	if utils.Is.Empty(sms.Body.Code) {
+		sms.Body.Code = utils.Rand.Code(sms.Body.Length)
 	}
 
-	if utils.Is.Empty(this.ApiKey) {
+	if utils.Is.Empty(sms.ApiKey) {
 		response.Error = errors.New("API密钥不能为空")
 		return
 	}
 
-	if utils.Is.Empty(this.Account) {
+	if utils.Is.Empty(sms.Account) {
 		response.Error = errors.New("账号不能为空")
 		return
 	}
 
 	item := utils.Curl(utils.CurlRequest{
 		Method: "GET",
-		Url:    fmt.Sprintf("%s/sms", this.BaseUrl),
+		Url:    fmt.Sprintf("%s/sms", sms.BaseUrl),
 		Query: map[string]any{
-			"u": this.Account,
-			"p": this.ApiKey,
-			"m": this.Body.Target,
-			"c": utils.Replace(this.Body.Template, map[string]any{
-				"${code}": this.Body.Code,
+			"u": sms.Account,
+			"p": sms.ApiKey,
+			"m": sms.Body.Target,
+			"c": utils.Replace(sms.Body.Template, map[string]any{
+				"${code}": sms.Body.Code,
 			}),
 		},
 	}).Send()
@@ -834,43 +984,20 @@ func (this *SmsBaoClass) Send(target ...any) (response *dto.SmsResp) {
 		return
 	}
 
-	response.VerifyCode = this.Body.Code
+	response.VerifyCode = sms.Body.Code
 	response.Text = item.Text
-
-	// 重置参数
-	this.reset()
 	return response
 }
 
 // SetBody - 设置参数体
 func (this *SmsBaoClass) SetBody(body dto.SmsBody) SmsAPI {
-	this.Body.Code = utils.Default(body.Code, this.Body.Code)
-	this.Body.Length = utils.Default(body.Length, this.Body.Length)
-	this.Body.Target = utils.Default(body.Target, this.Body.Target)
-	this.Body.Title = utils.Default(body.Title, this.Body.Title)
-	this.Body.Subject = utils.Default(body.Subject, this.Body.Subject)
-	this.Body.Nickname = utils.Default(body.Nickname, this.Body.Nickname)
-	this.Body.Username = utils.Default(body.Username, this.Body.Username)
-	if body.Expired != 0 {
-		this.Body.Expired = body.Expired
-	}
-	this.Body.Address = utils.Default(body.Address, this.Body.Address)
-	return this
+	sms := this.clone()
+	if sms == nil { return this }
+	sms.Body = SmsInst.mergeSmsBody(sms.Body, body)
+	return sms
 }
 
-// NewCache - 使用传入配置创建短信实例
-func (this *SmsBaoClass) NewCache(config dto.SmsConfig) SmsAPI {
-	return newSMSWithConfig(config, "smsbao")
-}
-
-// 重置参数
-func (this *SmsBaoClass) reset() {
-	this.Body.Code = ""
-	this.Body.Length = 6
-	this.Body.Target   = ""
-	this.Body.Subject = ""
-	this.Body.Nickname = ""
-	this.Body.Username = ""
-	this.Body.Expired = 5
-	this.Body.Address = ""
+// NewSms - 使用传入配置创建短信实例
+func (this *SmsBaoClass) NewSms(config dto.SmsConfig) SmsAPI {
+	return SmsInst.newWithConfig(config, "smsbao")
 }

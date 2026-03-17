@@ -20,7 +20,7 @@ import (
 var CacheInst = &CacheClass{}
 
 // init - 包初始化时启用默认缓存（文件缓存）
-func init() { useDefaultCache() }
+func init() { CacheInst.useDefaultCache() }
 
 // CacheClass - 缓存配置控制器
 type CacheClass struct {
@@ -32,8 +32,8 @@ type CacheClass struct {
 	HasConfig bool            `json:"hasConfig"`
 }
 
-// normalizeCacheConfig 统一配置默认值，避免不同项目接入时行为不一致
-func normalizeCacheConfig(config dto.CacheConfig) dto.CacheConfig {
+// normConfig 统一配置默认值，避免不同项目接入时行为不一致
+func (this *CacheClass) normConfig(config dto.CacheConfig) dto.CacheConfig {
 	
 	config.Engine = strings.ToLower(strings.TrimSpace(config.Engine))
 	if utils.Is.Empty(config.Engine) {
@@ -76,21 +76,21 @@ func normalizeCacheConfig(config dto.CacheConfig) dto.CacheConfig {
 	return config
 }
 
-// defaultCacheConfig - 获取默认缓存配置
-func defaultCacheConfig() dto.CacheConfig {
-	return normalizeCacheConfig(dto.CacheConfig{})
+// defaultConfig - 获取默认缓存配置
+func (this *CacheClass) defaultConfig() dto.CacheConfig {
+	return CacheInst.normConfig(dto.CacheConfig{})
 }
 
 // useDefaultCache - 使用默认配置激活缓存
-func useDefaultCache() {
-	conf := defaultCacheConfig()
-	setActiveCache(conf)
+func (this *CacheClass) useDefaultCache() {
+	conf := CacheInst.defaultConfig()
+	CacheInst.setActiveCache(conf)
 }
 
 // setActiveCache - 按配置切换当前活动缓存实现
-func setActiveCache(config dto.CacheConfig) {
+func (this *CacheClass) setActiveCache(config dto.CacheConfig) {
 	
-	conf := normalizeCacheConfig(config)
+	conf := CacheInst.normConfig(config)
 
 	switch conf.Engine {
 	case "redis":
@@ -108,7 +108,7 @@ func setActiveCache(config dto.CacheConfig) {
 
 // setConfig - 注入缓存配置
 func (this *CacheClass) setConfig(config dto.CacheConfig) *CacheClass {
-	this.Config = normalizeCacheConfig(config)
+	this.Config = CacheInst.normConfig(config)
 	this.HasConfig = true
 	return this
 }
@@ -132,15 +132,15 @@ func (this *CacheClass) Init(config ...dto.CacheConfig) {
 	}
 	
 	if !this.HasConfig {
-		useDefaultCache()
+		CacheInst.useDefaultCache()
 		return
 	}
 	
-	this.Config = normalizeCacheConfig(this.Config)
+	this.Config = CacheInst.normConfig(this.Config)
 	
 	// 记录配置 Hash 值
 	this.Hash = this.Config.Hash
-	setActiveCache(this.Config)
+	CacheInst.setActiveCache(this.Config)
 }
 
 // Cache - Cache实例
@@ -248,7 +248,7 @@ type CacheBody struct {
 }
 
 // cloneStrings - 克隆字符串切片，避免共享底层数组
-func cloneStrings(values []string) []string {
+func (this *CacheClass) cloneStrings(values []string) []string {
 	
 	if len(values) == 0 { return nil }
 
@@ -257,10 +257,10 @@ func cloneStrings(values []string) []string {
 	return clone
 }
 
-// cloneCacheBody - 克隆缓存上下文，避免链式调用串状态
-func cloneCacheBody(body CacheBody) CacheBody {
-	body.Keys = cloneStrings(body.Keys)
-	body.Tags = cloneStrings(body.Tags)
+// cloneBody - 克隆缓存上下文，避免链式调用串状态
+func (this *CacheClass) cloneBody(body CacheBody) CacheBody {
+	body.Keys = CacheInst.cloneStrings(body.Keys)
+	body.Tags = CacheInst.cloneStrings(body.Tags)
 	return body
 }
 
@@ -279,14 +279,14 @@ func (this *RedisClass) clone() *RedisClass {
 	if this == nil { return nil }
 
 	clone := *this
-	clone.Body = cloneCacheBody(this.Body)
+	clone.Body = CacheInst.cloneBody(this.Body)
 	return &clone
 }
 
 // NewCache - 按配置创建新的缓存实例
 func (this *RedisClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
-	conf := normalizeCacheConfig(config)
+	conf := CacheInst.normConfig(config)
 	
 	switch strings.ToLower(conf.Engine) {
 	case "file":
@@ -611,14 +611,14 @@ func (this *FileClass) clone() *FileClass {
 	if this == nil { return nil }
 
 	clone := *this
-	clone.Body = cloneCacheBody(this.Body)
+	clone.Body = CacheInst.cloneBody(this.Body)
 	return &clone
 }
 
 // NewCache - 按配置创建新的缓存实例
 func (this *FileClass) NewCache(config dto.CacheConfig) CacheAPI {
 	
-	conf := normalizeCacheConfig(config)
+	conf := CacheInst.normConfig(config)
 	
 	switch strings.ToLower(conf.Engine) {
 	case "redis":
