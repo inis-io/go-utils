@@ -423,9 +423,7 @@ func (this *RedisClass) Expired(second any) CacheAPI {
 // Has - 判断缓存是否存在
 func (this *RedisClass) Has(key string) (ok bool) {
 	
-	if utils.Is.Empty(key) {
-		return false
-	}
+	if utils.Is.Empty(key) { return false }
 	
 	ctx := context.Background()
 	
@@ -436,9 +434,7 @@ func (this *RedisClass) Has(key string) (ok bool) {
 // Get - 获取缓存
 func (this *RedisClass) Get(key string) (value any) {
 	
-	if utils.Is.Empty(key) {
-		return false
-	}
+	if utils.Is.Empty(key) { return false }
 	
 	ctx := context.Background()
 	
@@ -449,8 +445,8 @@ func (this *RedisClass) Get(key string) (value any) {
 
 // Set - 设置缓存
 func (this *RedisClass) Set(key string, value any) (ok bool) {
-	cache := this.clone()
 	
+	cache := this.clone()
 	if cache == nil || utils.Is.Empty(key) { return false }
 	
 	ctx := context.Background()
@@ -468,10 +464,9 @@ func (this *RedisClass) Set(key string, value any) (ok bool) {
 
 // Delete - 删除缓存
 func (this *RedisClass) Delete(key ...string) (ok bool) {
+	
 	cache := this.clone()
-	if cache == nil {
-		return false
-	}
+	if cache == nil { return false }
 	
 	var err error
 	ctx := context.Background()

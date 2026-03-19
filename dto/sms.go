@@ -87,35 +87,33 @@ type SmsBaoConfig struct {
 // SmsBody - 短信请求参数
 type SmsBody struct {
 	// Target - 目标手机号或邮箱
-	Target string
+	Target   string
 	// Code - 自定义验证码
-	Code string
+	Code     string
 	// Length - 验证码长度
-	Length int
+	Length   int
 	// Template - 发送模板
 	Template string
 	// 主题（标题）
-	Subject string
+	Subject  string
 	// 昵称（发件人昵称）
 	Nickname string
 	// 用户名（收件人昵称）
 	Username string
 	// 过期时间（分钟）
-	Expired int64
+	Expired  int64
 	// 通信地址
-	Address string
+	Address  string
 	// 标题
-	Title string
+	Title    string
 }
 
 // SmsResp - 短信响应
 type SmsResp struct {
-	// 错误信息
-	Error error
 	// 结果
-	Result any
+	Result     any
 	// 文本
-	Text string
+	Text       string
 	// 验证码
 	VerifyCode string
 }
