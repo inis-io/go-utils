@@ -36,15 +36,9 @@ func init() { LogInst.Init() }
 // normConfig - 统一配置默认值，避免不同项目接入时行为不一致
 func (this *LogClass) normConfig(config dto.LogConfig) dto.LogConfig {
 
-	if config.Size <= 0 {
-		config.Size = 2
-	}
-	if config.Age <= 0 {
-		config.Age = 7
-	}
-	if config.Backups <= 0 {
-		config.Backups = 20
-	}
+	if config.Size    <= 0 { config.Size = 2 }
+	if config.Age     <= 0 { config.Age  = 7 }
+	if config.Backups <= 0 { config.Backups = 20 }
 
 	// 仅当是空配置时启用默认值，避免覆盖调用方显式关闭日志。
 	if !config.Enable && config.Hash == "" && config.Size == 2 && config.Age == 7 && config.Backups == 20 {
@@ -81,12 +75,9 @@ func (this *LogClass) setConfig(config dto.LogConfig) *LogClass {
 
 // ReloadIfChanged - 当配置发生变化时重新加载日志
 func (this *LogClass) ReloadIfChanged(config ...dto.LogConfig) {
-	if len(config) > 0 {
-		this.setConfig(config[0])
-	}
-	if !this.HasConfig {
-		return
-	}
+	
+	if len(config) > 0 { this.setConfig(config[0]) }
+	if !this.HasConfig { return }
 
 	// hash 变化，说明配置有更新
 	if this.Hash != this.Config.Hash {
