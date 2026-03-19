@@ -39,3 +39,35 @@ func main() {
 	_ = custom
 }
 ```
+
+### Log 快速使用
+
+```go
+package main
+
+import (
+	"github.com/inis-io/aide/dto"
+	"github.com/inis-io/aide/facade"
+)
+
+func main() {
+	// 1) 初始化全局日志（推荐在应用启动时执行一次）
+	facade.LogInst.Init(dto.LogConfig{
+		Enable:  true,
+		Size:    10, // 单个日志文件大小（MB）
+		Age:     15, // 日志保留天数
+		Backups: 30, // 最大备份数量
+	})
+
+	// 2) 使用全局实例（两种方式都支持）
+	facade.Log.Info(map[string]any{"module": "user", "id": 1001}, "create user")
+	facade.Warn(map[string]any{"module": "user", "id": 1001}, "slow query")
+
+	// 3) 按配置创建独立实例（适合临时调试、多租户）
+	custom := facade.Log.NewLog(dto.LogConfig{Enable: true, Size: 5, Age: 3, Backups: 5})
+	custom.Debug(map[string]any{"traceId": "T-10086"}, "debug once")
+}
+```
+
+> `dto.LogConfig` 默认值：`Enable=true`、`Size=2`、`Age=7`、`Backups=20`。
+

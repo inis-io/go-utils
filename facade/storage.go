@@ -28,7 +28,7 @@ type StorageClass struct {
 	// 是否已经注入过配置
 	HasConfig bool              `json:"hasConfig"`
 	// 读写锁，保护配置和Hash的并发访问
-	mu        sync.RWMutex
+	Mutex     sync.RWMutex
 }
 
 func init() { StorageInst.Init() }
@@ -78,11 +78,11 @@ func (this *StorageClass) defaultConfig() dto.StorageConfig {
 func (this *StorageClass) useDefaultStorage() {
 	conf := StorageInst.defaultConfig()
 
-	this.mu.Lock()
+	this.Mutex.Lock()
 	this.Config = conf
 	this.Hash = conf.Hash
 	this.HasConfig = false
-	this.mu.Unlock()
+	this.Mutex.Unlock()
 
 	StorageInst.setActiveStorage(conf)
 }
@@ -92,9 +92,9 @@ func (this *StorageClass) setActiveStorage(config dto.StorageConfig) {
 
 	conf := StorageInst.normConfig(config)
 
-	this.mu.Lock()
+	this.Mutex.Lock()
 	this.Config = conf
-	this.mu.Unlock()
+	this.Mutex.Unlock()
 
 	Storage = StorageInst.newWithConfig(conf)
 
@@ -136,8 +136,8 @@ func (this *StorageClass) newWithConfig(config dto.StorageConfig) StorageAPI {
 
 // setConfig - 注入存储配置
 func (this *StorageClass) setConfig(config dto.StorageConfig) *StorageClass {
-	this.mu.Lock()
-	defer this.mu.Unlock()
+	this.Mutex.Lock()
+	defer this.Mutex.Unlock()
 
 	this.Config = StorageInst.normConfig(config)
 	this.HasConfig = true
@@ -151,11 +151,11 @@ func (this *StorageClass) ReloadIfChanged(config ...dto.StorageConfig) {
 		this.setConfig(config[0])
 	}
 
-	this.mu.RLock()
+	this.Mutex.RLock()
 	hasConfig := this.HasConfig
 	hash := this.Hash
 	confHash := this.Config.Hash
-	this.mu.RUnlock()
+	this.Mutex.RUnlock()
 
 	if !hasConfig {
 		return
@@ -174,10 +174,10 @@ func (this *StorageClass) Init(config ...dto.StorageConfig) {
 		this.setConfig(config[0])
 	}
 
-	this.mu.RLock()
+	this.Mutex.RLock()
 	hasConfig := this.HasConfig
 	current := this.Config
-	this.mu.RUnlock()
+	this.Mutex.RUnlock()
 
 	if !hasConfig {
 		StorageInst.useDefaultStorage()
@@ -186,10 +186,10 @@ func (this *StorageClass) Init(config ...dto.StorageConfig) {
 
 	conf := StorageInst.normConfig(current)
 
-	this.mu.Lock()
+	this.Mutex.Lock()
 	this.Config = conf
 	this.Hash = conf.Hash
-	this.mu.Unlock()
+	this.Mutex.Unlock()
 
 	StorageInst.setActiveStorage(conf)
 
