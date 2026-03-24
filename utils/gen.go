@@ -137,7 +137,7 @@ func (this *GenClass) SnowFlakeID(node int64) string {
 // BatchNo - 批次号
 func (this *GenClass) BatchNo(prefix any, value any) string {
 	date := time.Now().Format("20060102")
-	if Is.Empty(prefix) {
+	if !Is.Empty(prefix) {
 		return fmt.Sprintf("%s-%s-%04d", cast.ToString(prefix), date, value)
 	}
 	return fmt.Sprintf("%s-%04d", date, value)
