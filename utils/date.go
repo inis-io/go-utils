@@ -94,7 +94,7 @@ func (this *DateClass) FormatSeconds(seconds any) string {
 	return result
 }
 
-// Today - 获取今天开始和结束时间戳（闭区间）
+// Today - 获取今天开始和结束时间（闭区间）
 func (this *DateClass) Today(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -108,7 +108,7 @@ func (this *DateClass) Today(location any) (start time.Duration, end time.Durati
 	return
 }
 
-// Yesterday - 获取昨天开始和结束时间戳（闭区间）
+// Yesterday - 获取昨天开始和结束时间（闭区间）
 func (this *DateClass) Yesterday(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -122,7 +122,7 @@ func (this *DateClass) Yesterday(location any) (start time.Duration, end time.Du
 	return
 }
 
-// Week - 获取本周开始和结束时间戳（闭区间）
+// Week - 获取本周开始和结束时间（闭区间）
 func (this *DateClass) Week(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -140,7 +140,7 @@ func (this *DateClass) Week(location any) (start time.Duration, end time.Duratio
 	return
 }
 
-// LastWeek - 获取上周开始和结束时间戳（闭区间）
+// LastWeek - 获取上周开始和结束时间（闭区间）
 func (this *DateClass) LastWeek(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -158,7 +158,7 @@ func (this *DateClass) LastWeek(location any) (start time.Duration, end time.Dur
 	return
 }
 
-// Month - 获取本月开始和结束时间戳（闭区间）
+// Month - 获取本月开始和结束时间（闭区间）
 func (this *DateClass) Month(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -172,7 +172,7 @@ func (this *DateClass) Month(location any) (start time.Duration, end time.Durati
 	return
 }
 
-// LastMonth - 获取上月开始和结束时间戳
+// LastMonth - 获取上月开始和结束时间（闭区间）
 func (this *DateClass) LastMonth(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -186,7 +186,7 @@ func (this *DateClass) LastMonth(location any) (start time.Duration, end time.Du
 	return
 }
 
-// Year - 获取今年开始和结束时间
+// Year - 获取今年开始和结束时间（闭区间）
 func (this *DateClass) Year(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
@@ -200,7 +200,7 @@ func (this *DateClass) Year(location any) (start time.Duration, end time.Duratio
 	return
 }
 
-// LastYear - 获取去年开始和结束时间
+// LastYear - 获取去年开始和结束时间（闭区间）
 func (this *DateClass) LastYear(location any) (start time.Duration, end time.Duration) {
 	
 	if Is.Empty(location) { location = "Asia/Shanghai" }
