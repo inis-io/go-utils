@@ -312,23 +312,3 @@ func (this *log) ensureLogger(logger *zap.Logger) *zap.Logger {
 	}
 	return logger
 }
-
-// func Info(data map[string]any, msg ...any) {
-// 	LogInst.ensureLog()
-// 	Log.Info(data, msg...)
-// }
-//
-// func Warn(data map[string]any, msg ...any) {
-// 	LogInst.ensureLog()
-// 	Log.Warn(data, msg...)
-// }
-//
-// func Error(data map[string]any, msg ...any) {
-// 	LogInst.ensureLog()
-// 	Log.Error(data, msg...)
-// }
-//
-// func Debug(data map[string]any, msg ...any) {
-// 	LogInst.ensureLog()
-// 	Log.Debug(data, msg...)
-// }

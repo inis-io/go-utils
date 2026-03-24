@@ -134,6 +134,14 @@ func (this *GenClass) SnowFlakeID(node int64) string {
 	return item.Generate().String()
 }
 
+// BatchNo - 批次号
+func (this *GenClass) BatchNo(prefix string, value any) string {
+	date := time.Now().Format("20060102")
+	if prefix != "" {
+		return fmt.Sprintf("%s-%s-%04d", prefix, date, value)
+	}
+	return fmt.Sprintf("%s-%04d", date, value)
+}
 // IP 生成随机公网IP地址
 // 排除内网、保留地址等非公网IP范围
 func (this *GenClass) IP() string {
